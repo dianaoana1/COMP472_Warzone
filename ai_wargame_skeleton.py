@@ -312,6 +312,7 @@ class Game:
 
     def is_valid_move(self, coords : CoordPair) -> bool:
         """Validate a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
+        print(self.is_in_Combat(coords))
         if not self.is_valid_coord(coords.src) or not self.is_valid_coord(coords.dst):
             return False
         unit = self.get(coords.src)
@@ -319,6 +320,20 @@ class Game:
             return False
         unit = self.get(coords.dst)
         return (unit is None)
+
+    def is_in_Combat(self, coords: CoordPair) -> bool:
+        """Check if unit is currently engage in a combat"""
+        adj_coords = coords.src.iter_adjacent()
+        unit_src = self.get(coords.src)
+        print(unit_src)
+        for coord in adj_coords:
+            print(coord)
+            unit_adj = self.get(coord)
+            if unit_adj is not None:
+                if(unit_adj.player != unit_src.player):
+                    return True
+        return False
+
 
     def perform_move(self, coords : CoordPair) -> Tuple[bool,str]:
         """Validate and perform a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
