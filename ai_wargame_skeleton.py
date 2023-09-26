@@ -317,8 +317,39 @@ class Game:
         unit = self.get(coords.src)
         if unit is None or unit.player != self.next_player:
             return False
+        is_legal = self.is_legal_move(coords)
         unit = self.get(coords.dst)
-        return (unit is None)
+        return (unit is None and is_legal)
+
+    def is_in_Combat(self, coords: CoordPair) -> bool:
+        """Check if unit is currently engage in a combat"""
+        adj_coords = coords.src.iter_adjacent()
+        unit_src = self.get(coords.src)
+        for coord in adj_coords:
+            unit_adj = self.get(coord)
+            if unit_adj is not None:
+                if(unit_adj.player != unit_src.player):
+                    return True
+        return False
+
+    def is_legal_move(self, coords: CoordPair) -> bool:
+        no_move_combat = [UnitType.AI, UnitType.Firewall, UnitType.Program]
+        attacker_move = [UnitType.AI, UnitType.Firewall, UnitType.Program]
+        defender_move = [UnitType.AI, UnitType.Firewall, UnitType.Program]
+        adj_coords = coords.src.iter_adjacent()
+        coords_up_left = [next(adj_coords), next(adj_coords)]
+        coords_down_right = [next(adj_coords), next(adj_coords)]
+        unit_src = self.get(coords.src)
+        unit_dst = self.get(coords.dst)
+        if (self.is_in_Combat(coords) and unit_src.type in no_move_combat):
+            return False
+        if (unit_src.player == Player.Attacker and unit_src.type in attacker_move):
+            if (coords.dst not in coords_up_left):
+                return False
+        if (unit_src.player == Player.Defender and unit_src.type in defender_move):
+            if (coords.dst not in coords_down_right):
+                return False
+        return True
 
     def perform_move(self, coords : CoordPair) -> Tuple[bool,str]:
         """Validate and perform a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
