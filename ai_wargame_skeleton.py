@@ -333,7 +333,7 @@ class Game:
     def perform_move(self, coords: CoordPair) -> Tuple[bool, str]:
         """Validate and perform a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
 
-        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # ++++++++++++++++++++++ CHECKING HERE IF AN ATTACK IS HAPPENNING ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         # save the coords of the src and the dst
         src = coords.src
         dst = coords.dst
@@ -382,8 +382,7 @@ class Game:
         return (False, "invalid move")
 
     def perform_attack(self, src: Coord, dst: Coord):
-        """Perform an attack between the unit at source and destination coordinates."""
-
+        """Perform a bidirectional attack between units at source and destination coordinates."""
         attacker = self.get(src)
         defender = self.get(dst)
 
@@ -392,12 +391,19 @@ class Game:
             attacker_type = attacker.type
             defender_type = defender.type
 
-            # damage from the damage_table
-            damage = attacker.damage_amount(defender)
+            # find the damage caused from the damage table
+            damage_attacker_to_defender = attacker.damage_amount(defender)
+            damage_defender_to_attacker = defender.damage_amount(attacker)
 
-            # decrease the health of both units
-            attacker.mod_health(-damage)
-            defender.mod_health(-damage)
+            # reduce the health of both units depending to the right values in the table
+            attacker.mod_health(-damage_defender_to_attacker)
+            defender.mod_health(-damage_attacker_to_defender)
+
+        # decrease if either unit has health <= 0 and remove them
+        if attacker.health <= 0:
+            self.set(src, None)
+        if defender.health <= 0:
+            self.set(dst, None)
 
     ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
