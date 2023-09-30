@@ -350,7 +350,6 @@ class Game:
         coords_down_right = [next(adj_coords), next(adj_coords)]
         unit_src = self.get(coords.src)
         unit_dst = self.get(coords.dst)
-        print(unit_dst)
         if self.is_in_Combat(coords) and unit_src.type in no_move_combat and unit_dst is None:
             return False
         if unit_src.player == Player.Attacker and unit_src.type in attacker_move:
