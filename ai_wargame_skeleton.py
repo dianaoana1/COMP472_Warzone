@@ -401,6 +401,7 @@ class Game:
 
             else:
                 "This is not an attack!!"
+
         elif self.get(coords.src) is not None and self.get(
                 coords.dst) is not None and coords.src != coords.dst and self.get(coords.src).player.name == self.next_player.name:
             unit_src = self.get(coords.src)
