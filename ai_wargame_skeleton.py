@@ -362,48 +362,10 @@ class Game:
 
     def perform_move(self, coords: CoordPair) -> Tuple[bool, str]:
         """Validate and perform a move expressed as a CoordPair. TODO: WRITE MISSING CODE!!!"""
-        # ++++++++++++++++++++++ CHECKING HERE IF AN ATTACK IS HAPPENNING ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        # save the coords of the src and the dst
-        src = coords.src
-        dst = coords.dst
 
-        # ESTABLISH IF AN ATTACK IS HAPPENING (we look at the source of the movements and the dst to check)
-        # check if the source of the move if A or D
-        src_unit = self.get(src)  # holds information on the source of the move
-        mover_type = None  # this will hold the type of the attacker (A || D)
-
-        if src_unit is not None:
-            if src_unit.player == Player.Attacker:
-                mover_type = "Attacker"
-            elif src_unit.player == Player.Defender:
-                mover_type = "Defender"
-        # IM NOT SURE IF THIS IS NECESSARY   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # if type_source_move is None:
-        #      return (False, "Invalid source unit")
-
-        # CHECK IF THE DESTINATION IS BUSY
-        dst_unit = self.get(dst)
-
-        if dst_unit is not None:
-
-            # check if the destination is of a different type than the source
-            # src is attacker and dst is defender
-            if mover_type == "Attacker" and dst_unit.player == Player.Defender:
-                # the type is different so an attack will occur
-                self.perform_attack(src, dst)
-                return True, "Attacked the opponent, the health levels have been adjusted!"
-
-            # src is defencer and dst is attacker
-            elif mover_type == "Defender" and dst_unit.player == Player.Attacker:
-                # the type is different so an attack will occur
-                self.perform_attack(src, dst)
-                return True, "Attacked the opponent, the health levels have been adjusted!"
-
-            else:
-                "This is not an attack!!"
-
-        elif self.get(coords.src) is not None and self.get(
-                coords.dst) is not None and coords.src != coords.dst and self.get(coords.src).player.name == self.next_player.name:
+        if self.get(coords.src) is not None and self.get(
+                coords.dst) is not None and coords.src != coords.dst and self.get(
+            coords.src).player.name == self.next_player.name:
             unit_src = self.get(coords.src)
             unit_dst = self.get(coords.dst)
             if unit_src.player == unit_dst.player:
@@ -431,10 +393,48 @@ class Game:
                             damage = 2
                             print(f"{unit_src} deals {damage} damage to {unit_target}")
                             self.mod_health(target_coord, -damage)
+
+            # ++++++++++++++++++++++ CHECKING HERE IF AN ATTACK IS HAPPENING +++++++++++++++++++++++++++++++++++++++++++++
+            # Save the coords of the src and the dst
+            src = coords.src
+            dst = coords.dst
+
+            # Establish if an attack is happening (we look at the source of the movements and the dst to check)
+            # Check if the source of the move if A or D
+            src_unit = self.get(src)  # Holds information on the source of the move
+            mover_type = None  # This will hold the type of the attacker (A || D)
+
+            if src_unit is not None:
+                if src_unit.player == Player.Attacker:
+                    mover_type = "Attacker"
+                elif src_unit.player == Player.Defender:
+                    mover_type = "Defender"
+            else:
+                return False, "Invalid source unit"  # Handle the case when source unit is None
+
+            # CHECK IF THE DESTINATION IS BUSY
+            dst_unit = self.get(dst)
+
+            if dst_unit is not None:
+                # Check if the destination is of a different type than the source
+                # src is attacker and dst is defender
+                if mover_type == "Attacker" and dst_unit.player == Player.Defender:
+                    # The types are different, so an attack will occur
+                    self.perform_attack(src, dst)
+                    return True, "Attacked the opponent, the health levels have been adjusted!"
+
+                # src is defender and dst is attacker
+                elif mover_type == "Defender" and dst_unit.player == Player.Attacker:
+                    # The types are different, so an attack will occur
+                    self.perform_attack(src, dst)
+                    return True, "Attacked the opponent, the health levels have been adjusted!"
+
             self.set(coords.dst, self.get(coords.src))
             self.set(coords.src, None)
             return True, "Done"
+
         return False, "invalid move"
+
 
     def perform_attack(self, src: Coord, dst: Coord):
         # """Perform a bidirectional attack between units at source and destination coordinates."""
