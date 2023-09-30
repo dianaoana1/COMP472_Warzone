@@ -353,11 +353,9 @@ class Game:
         print(unit_dst)
         if self.is_in_Combat(coords) and unit_src.type in no_move_combat and unit_dst is None:
             return False
-        print("here")
         if unit_src.player == Player.Attacker and unit_src.type in attacker_move:
             if coords.dst not in coords_up_left:
                 return False
-        print("hello")
         if unit_src.player == Player.Defender and unit_src.type in defender_move:
             if coords.dst not in coords_down_right:
                 return False
