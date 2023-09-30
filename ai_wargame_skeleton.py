@@ -328,7 +328,7 @@ class Game:
             return False
         is_legal = self.is_legal_move(coords)
         unit = self.get(coords.dst)
-        return unit is None and is_legal or unit == self.get(coords.src)
+        return is_legal or unit == self.get(coords.src)
 
     def is_in_Combat(self, coords: CoordPair) -> bool:
         """Check if unit is currently engage in a combat"""
@@ -350,11 +350,14 @@ class Game:
         coords_down_right = [next(adj_coords), next(adj_coords)]
         unit_src = self.get(coords.src)
         unit_dst = self.get(coords.dst)
-        if self.is_in_Combat(coords) and unit_src.type in no_move_combat:
+        print(unit_dst)
+        if self.is_in_Combat(coords) and unit_src.type in no_move_combat and unit_dst is None:
             return False
+        print("here")
         if unit_src.player == Player.Attacker and unit_src.type in attacker_move:
             if coords.dst not in coords_up_left:
                 return False
+        print("hello")
         if unit_src.player == Player.Defender and unit_src.type in defender_move:
             if coords.dst not in coords_down_right:
                 return False
