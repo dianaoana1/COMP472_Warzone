@@ -1,0 +1,26 @@
+
+Attacked the opponent, the health levels have been adjusted!
+Player Attacker: 
+Done
+You have killed the soldier dF9.
+dF0 deals 2 damage to dT9
+dF0 deals 2 damage to dP9
+Player Defender: 
+Done
+Player Attacker: 
+Done
+dT9 repaired 2 health to dP7
+Player Defender: 
+Done
+
+Player Attacker: 
+Done
+Attacked the opponent, the health levels have been adjusted!
+Player Defender: 
+Attacked the opponent, the health levels have been adjusted!
+You have killed the soldier aA9.
+aA0 deals 2 damage to aV9
+aA0 deals 2 damage to aV9
+Player Attacker: 
+Done
+Defender wins!

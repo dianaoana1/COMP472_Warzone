@@ -8,6 +8,7 @@ from time import sleep
 from typing import Tuple, TypeVar, Type, Iterable, ClassVar
 import random
 import requests
+import sys
 
 # maximum and minimum values for our heuristic scores (usually represents an end of game condition)
 MAX_HEURISTIC_SCORE = 2000000000
@@ -41,6 +42,18 @@ class GameType(Enum):
     AttackerVsComp = 1
     CompVsDefender = 2
     CompVsComp = 3
+
+
+##############################################################################################################
+class WriteToFile:
+    def __init__(self, filename: str):
+        self.file = filename
+        self.original_stdout = sys.stdout
+
+    def append_to_file(self, output: str):
+        if output.strip():
+            with open(self.file, 'a') as file:
+                file.write(output)
 
 
 ##############################################################################################################
@@ -257,6 +270,7 @@ class Game:
     stats: Stats = field(default_factory=Stats)
     _attacker_has_ai: bool = True
     _defender_has_ai: bool = True
+    fileWriter: WriteToFile = field(default=None)
 
     def __post_init__(self):
         """Automatically called after class init to set up the default board state."""
@@ -366,18 +380,20 @@ class Game:
         if self.get(coords.src) is not None and self.get(
                 coords.dst) is not None and coords.src != coords.dst and self.get(
             coords.src).player.name == self.next_player.name and self.get(
-            coords.dst).player.name == self.next_player.name :
+            coords.dst).player.name == self.next_player.name:
             unit_src = self.get(coords.src)
             unit_dst = self.get(coords.dst)
             if unit_src.player == unit_dst.player:
                 health_amount = unit_src.repair_amount(unit_dst)
                 if health_amount == 0 or unit_dst.health == 9:
                     print("You are unable to repair at this moment.")
+                    self.fileWriter.append_to_file("\nYou are unable to repair at this moment.")
                     return False, ""
                 elif health_amount > 0:
                     print(f"{unit_src} repaired {health_amount} health to {unit_dst}")
+                    self.fileWriter.append_to_file(f"\n{unit_src} repaired {health_amount} health to {unit_dst}")
                     self.mod_health(coords.dst, health_amount)
-                return True, "Done"
+                return True, "Done\n"
         elif self.is_valid_move(coords):
             # ++++++++++++++++++++++ CHECKING HERE IF AN ATTACK IS HAPPENING +++++++++++++++++++++++++++++++++++++++++++++
             # Save the coords of the src and the dst
@@ -395,6 +411,7 @@ class Game:
                 elif unit_src.player == Player.Defender:
                     mover_type = "Defender"
             else:
+                self.fileWriter.append_to_file("\nInvalid source unit")
                 return False, "Invalid source unit"  # Handle the case when source unit is None
 
             if unit_dst is not None:
@@ -403,18 +420,19 @@ class Game:
                 if mover_type == "Attacker" and unit_dst.player == Player.Defender:
                     # The types are different, so an attack will occur
                     self.perform_attack(src, dst)
+                    self.fileWriter.append_to_file("\nAttacked the opponent, the health levels have been adjusted!")
                     return True, "Attacked the opponent, the health levels have been adjusted!"
 
                 # src is defender and dst is attacker
                 elif mover_type == "Defender" and unit_dst.player == Player.Attacker:
                     # The types are different, so an attack will occur
                     self.perform_attack(src, dst)
+                    self.fileWriter.append_to_file("\nAttacked the opponent, the health levels have been adjusted!")
                     return True, "Attacked the opponent, the health levels have been adjusted!"
 
-            unit_src = self.get(coords.src)
-            unit_dst = self.get(coords.dst)
             if coords.dst == coords.src:
                 print("You have killed the soldier {}.".format(unit_src))
+                self.fileWriter.append_to_file("\nYou have killed the soldier {}.".format(unit_src))
                 self.mod_health(coords.dst, -9)
                 # Attack all surrounding units
                 for row in range(coords.src.row - 1, coords.src.row + 2):
@@ -426,14 +444,13 @@ class Game:
                         if unit_src is not None and unit_target is not None:
                             damage = 2
                             print(f"{unit_src} deals {damage} damage to {unit_target}")
+                            self.fileWriter.append_to_file(f"\n{unit_src} deals {damage} damage to {unit_target}")
                             self.mod_health(target_coord, -damage)
-
-
 
             self.set(coords.dst, self.get(coords.src))
             self.set(coords.src, None)
             return True, "Done"
-
+        self.fileWriter.append_to_file("invalid move!")
         return False, "invalid move"
 
     def perform_attack(self, src: Coord, dst: Coord):
@@ -450,7 +467,7 @@ class Game:
             damage_attacker_to_defender = attacker.damage_amount(defender)
             damage_defender_to_attacker = defender.damage_amount(attacker)
 
-            # reduce the health of both units depending to the right values in the table
+            # reduce the health of both units depending on the right values in the table
             attacker.mod_health(-damage_defender_to_attacker)
             defender.mod_health(-damage_attacker_to_defender)
 
@@ -511,7 +528,9 @@ class Game:
             if coords is not None and self.is_valid_coord(coords.src) and self.is_valid_coord(coords.dst):
                 return coords
             else:
-                print('Invalid coordinates! Try again.')
+                str = 'Invalid coordinates! Try again.'
+                print(str)
+                self.fileWriter.append_to_file("\n"+str)
 
     def human_turn(self):
         """Human player plays a move (or get via broker)."""
@@ -522,6 +541,7 @@ class Game:
                 if mv is not None:
                     (success, result) = self.perform_move(mv)
                     print(f"Broker {self.next_player.name}: ", end='')
+                    self.fileWriter.append_to_file(f"\nBroker {self.next_player.name}: ")
                     print(result)
                     if success:
                         self.next_turn()
@@ -533,10 +553,13 @@ class Game:
                 (success, result) = self.perform_move(mv)
                 if success:
                     print(f"Player {self.next_player.name}: ", end='')
+                    self.fileWriter.append_to_file(f"\nPlayer {self.next_player.name}: ")
                     print(result)
+                    self.fileWriter.append_to_file("\n"+result)
                     self.next_turn()
                     break
                 else:
+                    self.fileWriter.append_to_file("\nThe move is not valid! Try again.")
                     print("The move is not valid! Try again.")
 
     def computer_turn(self) -> CoordPair | None:
@@ -665,7 +688,10 @@ class Game:
 ##############################################################################################################
 
 def main():
+    # file_writer.append_to_file("Hello, World!\n")
+    # file_writer.append_to_file("This is a test.\n")
     # parse command line arguments
+    global fileName
     parser = argparse.ArgumentParser(
         prog='ai_wargame',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -696,16 +722,19 @@ def main():
     if args.broker is not None:
         options.broker = args.broker
 
+    fileName = f"gameTrace-{str(options.alpha_beta).lower()}-{str(int(options.max_time))}-{str(options.max_turns)}.txt"
+
+    file_writer = WriteToFile(fileName)
     # create a new game
-    game = Game(options=options)
+    game = Game(options=options, fileWriter=file_writer)
 
     # the main game loop
     while True:
-        print()
         print(game)
         winner = game.has_winner()
         if winner is not None:
             print(f"{winner.name} wins!")
+            file_writer.append_to_file(f"\n{winner.name} wins!")
             break
         if game.options.game_type == GameType.AttackerVsDefender:
             game.human_turn()
@@ -720,6 +749,7 @@ def main():
                 game.post_move_to_broker(move)
             else:
                 print("Computer doesn't know what to do!!!")
+                file_writer.append_to_file("\nComputer doesn't know what to do!!!")
                 exit(1)
 
 
