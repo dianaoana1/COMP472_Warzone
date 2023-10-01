@@ -55,6 +55,9 @@ class WriteToFile:
             with open(self.file, 'a') as file:
                 file.write(output)
 
+    def empty_file(self, filename):
+        open(filename, "w")
+
 
 ##############################################################################################################
 
@@ -449,8 +452,9 @@ class Game:
 
             self.set(coords.dst, self.get(coords.src))
             self.set(coords.src, None)
+            self.fileWriter.append_to_file(f"\n{src} moved to {dst} successfully")
             return True, "Done"
-        self.fileWriter.append_to_file("invalid move!")
+        self.fileWriter.append_to_file("\ninvalid move!")
         return False, "invalid move"
 
     def perform_attack(self, src: Coord, dst: Coord):
@@ -714,7 +718,7 @@ def main():
     # set up game options
     options = Options(game_type=game_type)
 
-    # override class defaults via command line options
+    # override class defaults via command line optionsc1c2
     if args.max_depth is not None:
         options.max_depth = args.max_depth
     if args.max_time is not None:
@@ -725,6 +729,7 @@ def main():
     fileName = f"gameTrace-{str(options.alpha_beta).lower()}-{str(int(options.max_time))}-{str(options.max_turns)}.txt"
 
     file_writer = WriteToFile(fileName)
+    file_writer.empty_file(fileName)
     # create a new game
     game = Game(options=options, fileWriter=file_writer)
 
