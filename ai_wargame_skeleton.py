@@ -359,8 +359,11 @@ class Game:
         return False
 
     def is_legal_move(self, coords: CoordPair) -> bool:
+        # unit types that cant ove during combat
         no_move_combat = [UnitType.AI, UnitType.Firewall, UnitType.Program]
+        # attacker units that have specific movement conditions
         attacker_move = [UnitType.AI, UnitType.Firewall, UnitType.Program]
+        # same but defender
         defender_move = [UnitType.AI, UnitType.Firewall, UnitType.Program]
         adj_coords = coords.src.iter_adjacent()
         coords_up_left = [next(adj_coords), next(adj_coords)]
@@ -588,17 +591,18 @@ class Game:
         """Check if the game is over."""
         return self.has_winner() is not None
 
+
+
     def has_winner(self) -> Player | None:
         """Check if the game is over and returns winner"""
         if self.options.max_turns is not None and self.turns_played >= self.options.max_turns:
             return Player.Defender
-        elif self._attacker_has_ai:
+        if self._attacker_has_ai:
             if self._defender_has_ai:
                 return None
             else:
                 return Player.Attacker
-        elif self._defender_has_ai:
-            return Player.Defender
+        return Player.Defender
 
     def move_candidates(self) -> Iterable[CoordPair]:
         """Generate valid move candidates for the next player."""
