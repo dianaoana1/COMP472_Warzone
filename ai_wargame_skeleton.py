@@ -277,12 +277,14 @@ class Node:
   value: list[str] = field(default_factory=list)
   score: int = 0
   currentDepth: int = 0
+  currentPlayer: str = ""
 
-  def __init__(self, value, current_Depth=None, heuristic_score=0):
+  def __init__(self, value, current_Depth=None, heuristic_score=0, current_player = ""):
     self.children = []
     self.value = value
     self.score = heuristic_score
     self.currentDepth = current_Depth
+    self.currentPlayer = current_player
 
   def add_child(self, child_node):
     self.children.append(child_node)
@@ -724,7 +726,7 @@ class Game:
     # Player 1 being the defender/computer
     nbV1 = 0
     nbV2 = 0
-    nbT1 = 0 
+    nbT1 = 0
     nbT2 = 0
     nbF1 = 0
     nbF2 = 0
@@ -732,6 +734,8 @@ class Game:
     nbP2 = 0
     nbAi1 = 0
     nbAi2 = 0
+    firstPart = 0
+    secondPart = 0
     for player in [Player.Attacker, Player.Defender]:
       for type in self.player_units(player):
         match type[1].type:
@@ -760,15 +764,18 @@ class Game:
                   nbF2 +=1
             case _:
                 break
-        
-    firstPart = 3*nbV1 + 3*nbT1 + 3*nbF1 + 3*nbP1 + 9999*nbAi1
-    secondPart = 3*nbV2 + 3*nbT2 + 3*nbF2 + 3*nbP2 + 9999*nbAi2
+    if self.next_player == Player.Defender:
+      firstPart = 3*nbV1 + 3*nbT1 + 3*nbF1 + 3*nbP1 + 9999*nbAi1
+      secondPart = 3*nbV2 + 3*nbT2 + 3*nbF2 + 3*nbP2 + 9999*nbAi2
+    else:
+      firstPart = 3 * nbV2 + 3 * nbT2 + 3 * nbF2 + 3 * nbP2 + 9999 * nbAi2
+      secondPart = 3*nbV1 + 3*nbT1 + 3*nbF1 + 3*nbP1 + 9999*nbAi1
     return firstPart - secondPart
 
   def createTree(self):
     """Creates a tree of nodes"""
     move_candidates = list(self.move_candidates())
-    root = Node(value=move_candidates, current_Depth=0)
+    root = Node(value=move_candidates, current_Depth=0, current_player=str(Player.Attacker))
     gameCopy = self.clone()
     root = self.addNode(root, 0, gameCopy)
     numberChild = 0
@@ -778,15 +785,17 @@ class Game:
 
   def addNode(self, root, current_depth, game_copy):
     """Adds a node to the tree"""
-    if current_depth + 1 > game_copy.options.max_depth - 1:
+    if current_depth + 1 > game_copy.options.max_depth - 1 or self.has_winner():
       return root
     currentDepth = current_depth + 1
     for move in root.value:
       gameCopy = game_copy.clone()
       gameCopy.computer_perform_move(move)
-      move_candidates = list(gameCopy.move_candidates())
       heuristic_score = gameCopy.e0()
-      child = Node(value=move_candidates, current_Depth=currentDepth, heuristic_score=heuristic_score)
+      current_Player = gameCopy.next_player
+      gameCopy.next_turn()
+      move_candidates = list(gameCopy.move_candidates())
+      child = Node(value=move_candidates, current_Depth=currentDepth, heuristic_score=heuristic_score, current_player=str(current_Player))
       newChild = gameCopy.addNode(child, currentDepth, gameCopy)
       root.add_child(newChild)
     return root
