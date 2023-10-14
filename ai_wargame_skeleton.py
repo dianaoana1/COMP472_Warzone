@@ -289,68 +289,6 @@ class Node:
   def add_child(self, child_node):
     self.children.append(child_node)
 
-  # ======================================= MINIMAX LOGIC ==========================================================
-  def minimax(self, depth, max_player):
-  # max_player is a booleean indicating if its the max player's turn
-
-    # reached depth 0 or have no children
-    if depth == 0 or not self.children:
-      return self.score
-
-    # in max player turn
-    if max_player:
-      max_eval = MIN_HEURISTIC_SCORE
-      best_child=None
-
-      for child in self.children:
-        # put the score of the child we are at in a var
-        child_score=child.score
-
-        # calculate the minimax value for children node
-        eval = child.minimax(depth - 1, False)
-
-        # check whether the current child heuristic is better, if so assign new child
-        if child_score>max_eval:
-          max_eval=child_score
-          best_child=child
-
-      return max_eval
-
-    else:
-      min_eval = MAX_HEURISTIC_SCORE
-      best_child=None
-
-      for child in self.children:
-        child_score = child.score
-        eval = child.minimax(depth - 1, True)
-
-        if child_score<min_eval:
-          # give to min_eval the smallest h value
-          min_eval = min(min_eval, eval)
-          best_child=child
-
-      return min_eval
-
-  def optimal_move_minimax(self, depth):
-    root =self.root
-    optimal_move=None
-    optimal_value = MIN_HEURISTIC_SCORE
-    best_child=None
-
-    for child in root.children:
-      value = self.minimax(child,depth,False)
-
-      if value > optimal_value:
-        optimal_value=value
-        best_child=child
-
-    if best_child:
-      optimal_move=best_child.value   #move associated with best child heuristic score
-
-    return 0, optimal_move
-
-
-# ====================================================================================================================
 
 
 ##############################################################################################################
@@ -845,6 +783,7 @@ class Game:
     for child in root.children:
       numberChild += len(child.children)
     print("Tree size: ", numberChild)
+    return root
 
   def addNode(self, root, current_depth, game_copy):
     """Adds a node to the tree"""
@@ -876,7 +815,13 @@ class Game:
   def suggest_move(self) -> CoordPair | None:
     """Suggest the next move using minimax alpha beta. TODO: REPLACE RANDOM_MOVE WITH PROPER GAME LOGIC!!!"""
     start_time = datetime.now()
+
     (score, move, avg_depth) = self.random_move()
+
+    # root = self.createTree()
+    # (score, move, avg_depth) = self.optimal_move_minimax(root, 3)
+
+
     elapsed_seconds = (datetime.now() - start_time).total_seconds()
     self.stats.total_seconds += elapsed_seconds
     print(f"Heuristic score: {score}")
@@ -890,16 +835,143 @@ class Game:
       print(
           f"Eval perf.: {total_evals / self.stats.total_seconds / 1000:0.1f}k/s"
       )
+
     # if self.alpha_beta=True:
     #   alpha_beta()
     # else:
+    # optimal_move()
+      # 55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+    root = self.createTree()
+    minimax_result = self.optimal_move_minimax(root, 3)
+
+    # print('in suggest move'+str(minimaxBest))
+    # best_child=minimax_result 2222222
 
 
     print(f"Elapsed time: {elapsed_seconds:0.1f}s")
     return move
 
+    # ======================================= MINIMAX LOGIC ==========================================================
+  # TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  # def minimax(self, node, depth, max_player):
+  #   if depth == 0 or not node.children:
+  #     return node.score, 1  # Base case: return the score and depth of this node
+  #
+  #   if max_player:
+  #     max_eval = MIN_HEURISTIC_SCORE
+  #     best_child = None
+  #     total_depth = 0  # Track the total depth of all children
+  #
+  #     for child in node.children:
+  #       child_score, child_depth = self.minimax(child, depth - 1, False)
+  #       total_depth += child_depth
+  #
+  #       if child_score > max_eval:
+  #         max_eval = child_score
+  #         best_child = child
+  #
+  #     return max_eval, total_depth
+  #
+  #   else:
+  #     min_eval = MAX_HEURISTIC_SCORE
+  #     best_child = None
+  #     total_depth = 0
+  #
+  #     for child in node.children:
+  #       child_score, child_depth = self.minimax(child, depth - 1, True)
+  #       total_depth += child_depth
+  #
+  #       if child_score < min_eval:
+  #         min_eval = child_score
+  #         best_child = child
+  #
+  #     return min_eval, total_depth
+      # TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 
+  def minimax(self,node, depth, max_player):
+      # max_player is a booleean indicating if its the max player's turn
 
+      # reached depth 0 or have no children
+      if depth == 0 or not node.children:
+        # return self.score
+          return node.score
+
+      # in max player turn
+      if max_player:
+        max_eval = MIN_HEURISTIC_SCORE
+        best_child = None
+
+        for child in node.children:
+          # put the score of the child we are at in a var
+          child_score = child.score
+
+          # calculate the minimax value for children node
+          eval = self.minimax(child, depth - 1, False)
+
+          # check whether the current child heuristic is better, if so assign new child
+          if child_score > max_eval:
+            max_eval = child_score
+            best_child = child
+
+        return max_eval
+
+      else:
+        min_eval = MAX_HEURISTIC_SCORE
+        best_child = None
+
+        for child in node.children:
+          child_score = child.score
+          eval = self.minimax(child, depth - 1, True)
+
+          if child_score < min_eval:
+            # give to min_eval the smallest h value
+            min_eval = min(min_eval, eval)
+            best_child = child
+
+      return min_eval
+
+  # TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  # def optimal_move_minimax(self, root, depth):
+  #   best_score = MIN_HEURISTIC_SCORE
+  #   best_move = None
+  #   best_avg_depth = 0
+  #   best_child = None
+  #
+  #   for child in root.children:
+  #     score = self.minimax(child, depth, False)
+  #     avg_depth = 0  # You need to calculate the average depth within the minimax function
+  #
+  #     if child.score > best_score:
+  #       best_score = score
+  #       best_move = child.value[0]  # Assuming child.value is a list of moves
+  #       best_avg_depth = avg_depth
+  #       best_child = child
+  #
+  #   return best_score, best_move, best_avg_depth
+  # TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+
+  def optimal_move_minimax(self, root, depth):
+
+      # root = self.createTree()
+
+      optimal_move = None
+      optimal_value = MIN_HEURISTIC_SCORE
+      best_child = None
+
+      for child in root.children:
+        value = self.minimax(child, depth, False)
+
+        if value > optimal_value:
+          optimal_value = value
+          best_child = child
+
+      if best_child:
+        optimal_move = best_child.value  # move associated with best child heuristic score!!!!!!!!!!!!!!!!!!!!!!!!11111
+
+      # "Best Child is "+str(best_child)
+      return 0, best_child
+
+  # ====================================================================================================================
 
   def post_move_to_broker(self, move: CoordPair):
     """Send a move to the game broker."""
