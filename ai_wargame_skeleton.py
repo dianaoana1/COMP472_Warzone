@@ -289,6 +289,69 @@ class Node:
   def add_child(self, child_node):
     self.children.append(child_node)
 
+  # ======================================= MINIMAX LOGIC ==========================================================
+  def minimax(self, depth, max_player):
+  # max_player is a booleean indicating if its the max player's turn
+
+    # reached depth 0 or have no children
+    if depth == 0 or not self.children:
+      return self.score
+
+    # in max player turn
+    if max_player:
+      max_eval = MIN_HEURISTIC_SCORE
+      best_child=None
+
+      for child in self.children:
+        # put the score of the child we are at in a var
+        child_score=child.score
+
+        # calculate the minimax value for children node
+        eval = child.minimax(depth - 1, False)
+
+        # check whether the current child heuristic is better, if so assign new child
+        if child_score>max_eval:
+          max_eval=child_score
+          best_child=child
+
+      return max_eval
+
+    else:
+      min_eval = MAX_HEURISTIC_SCORE
+      best_child=None
+
+      for child in self.children:
+        child_score = child.score
+        eval = child.minimax(depth - 1, True)
+
+        if child_score<min_eval:
+          # give to min_eval the smallest h value
+          min_eval = min(min_eval, eval)
+          best_child=child
+
+      return min_eval
+
+  def optimal_move_minimax(self, depth):
+    root =self.root
+    optimal_move=None
+    optimal_value = MIN_HEURISTIC_SCORE
+    best_child=None
+
+    for child in root.children:
+      value = self.minimax(child,depth,False)
+
+      if value > optimal_value:
+        optimal_value=value
+        best_child=child
+
+    if best_child:
+      optimal_move=best_child.value   #move associated with best child heuristic score
+
+    return 0, optimal_move
+
+
+# ====================================================================================================================
+
 
 ##############################################################################################################
 
@@ -827,8 +890,16 @@ class Game:
       print(
           f"Eval perf.: {total_evals / self.stats.total_seconds / 1000:0.1f}k/s"
       )
+    # if self.alpha_beta=True:
+    #   alpha_beta()
+    # else:
+
+
     print(f"Elapsed time: {elapsed_seconds:0.1f}s")
     return move
+
+
+
 
   def post_move_to_broker(self, move: CoordPair):
     """Send a move to the game broker."""
