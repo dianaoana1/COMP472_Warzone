@@ -739,32 +739,26 @@ class Game:
     secondPart = 0
     for player in [Player.Attacker, Player.Defender]:
       for type in self.player_units(player):
-        match type[1].type:
-            case UnitType.AI:
-                if player == Player.Defender:
-                  nbAi1 += 1
-                else:
-                  nbAi2 +=1
-  
-            case UnitType.Tech:
-                nbT1 += 1
-  
-            case UnitType.Virus:
-                nbV2 +=1
-  
-            case UnitType.Program:
-                if player == Player.Defender:
-                  nbP1 += 1
-                else:
-                  nbP2 +=1
-  
-            case UnitType.Firewall:
-                if player == Player.Defender:
-                  nbF1 += 1
-                else:
-                  nbF2 +=1
-            case _:
-                break
+        if(type[1].type == UnitType.AI):
+          if player == Player.Defender:
+            nbAi1 += 1
+          else:
+            nbAi2 += 1
+        elif(type[1].type == UnitType.Tech):
+          nbT1 += 1
+        elif(type[1].type == UnitType.Virus):
+          nbV2 += 1
+        elif (type[1].type == UnitType.Program):
+          if player == Player.Defender:
+            nbP1 += 1
+          else:
+            nbP2 += 1
+        elif (type[1].type == UnitType.Firewall):
+          if player == Player.Defender:
+            nbF1 += 1
+          else:
+            nbF2 += 1
+        else: break
     if self.next_player == Player.Defender:
       firstPart = 3*nbV1 + 3*nbT1 + 3*nbF1 + 3*nbP1 + 9999*nbAi1
       secondPart = 3*nbV2 + 3*nbT2 + 3*nbF2 + 3*nbP2 + 9999*nbAi2
