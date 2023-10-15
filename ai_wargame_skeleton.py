@@ -808,10 +808,12 @@ class Game:
     """Suggest the next move using minimax alpha beta. TODO: REPLACE RANDOM_MOVE WITH PROPER GAME LOGIC!!!"""
     start_time = datetime.now()
 
-    (score, move, avg_depth) = self.random_move()
+    #(score, move, avg_depth) = self.random_move()
 
     # root = self.createTree()
-    # (score, move, avg_depth) = self.optimal_move_minimax(root, 3)
+    root = self.createTree()
+    (score, move, avg_depth) = self.optimal_move_minimax(root, 3)
+    print(move)
 
 
     elapsed_seconds = (datetime.now() - start_time).total_seconds()
@@ -833,8 +835,6 @@ class Game:
     # else:
     # optimal_move()
       # 55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
-    root = self.createTree()
-    minimax_result = self.optimal_move_minimax(root, 3)
 
     # print('in suggest move'+str(minimaxBest))
     # best_child=minimax_result 2222222
@@ -944,7 +944,7 @@ class Game:
   #   return best_score, best_move, best_avg_depth
   # TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 
-  def optimal_move_minimax(self, root, depth):
+  def optimal_move_minimax(self, root, depth) -> Tuple[int, CoordPair | None, float]:
 
       # root = self.createTree()
 
@@ -952,19 +952,18 @@ class Game:
       optimal_value = MIN_HEURISTIC_SCORE
       best_child = None
 
-      for child in root.children:
+      for index, child in enumerate(root.children):
         value = self.minimax(child, depth, False)
 
         if value > optimal_value:
           optimal_value = value
           best_child = child
+          optimal_move = root.value[index]
 
-      if best_child:
-        optimal_move = best_child.value  # move associated with best child heuristic score!!!!!!!!!!!!!!!!!!!!!!!!11111
       print("THE BEST SCORE of CHILD IS", best_child.score)
-      print("THE BEST CHILD IS "+ str(best_child))
+      print("THE BEST CHILD IS "+ str(optimal_move))
       # "Best Child is "+str(best_child)
-      return 0, best_child
+      return 0, optimal_move, 0
 
   # ====================================================================================================================
 
