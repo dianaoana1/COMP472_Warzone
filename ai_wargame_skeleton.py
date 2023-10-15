@@ -289,8 +289,6 @@ class Node:
   def add_child(self, child_node):
     self.children.append(child_node)
 
-
-
 ##############################################################################################################
 
 
@@ -889,6 +887,7 @@ class Game:
       # TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 
   def minimax(self,node, depth, max_player):
+      # when calling at first the method we are passing the root node since createTree returns it
       # max_player is a booleean indicating if its the max player's turn
 
       # reached depth 0 or have no children
@@ -927,6 +926,7 @@ class Game:
             # give to min_eval the smallest h value
             min_eval = min(min_eval, eval)
             best_child = child
+
 
       return min_eval
 
@@ -967,7 +967,8 @@ class Game:
 
       if best_child:
         optimal_move = best_child.value  # move associated with best child heuristic score!!!!!!!!!!!!!!!!!!!!!!!!11111
-
+      print("THE BEST SCORE of CHILD IS", best_child.score)
+      print("THE BEST CHILD IS "+ str(best_child))
       # "Best Child is "+str(best_child)
       return 0, best_child
 
