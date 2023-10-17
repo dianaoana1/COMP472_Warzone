@@ -946,19 +946,30 @@ class Game:
     optimal_move = None
     optimal_value = MIN_HEURISTIC_SCORE
     best_child = None
-
-    for index, child in enumerate(root.children):
+    values = []
+    children = []
+    for child in root.children:
       value = self.minimax(child, depth, False)
+      if value >= optimal_value:
+        # optimal_value = value
+        # best_child = child
+        # optimal_move = root.value[index]
+        values.append(value)
+        children.append(child)
 
-      if value > optimal_value:
-        optimal_value = value
-        best_child = child
-        optimal_move = root.value[index]
+    max_value = max(values)
+    max_indices = [i for i, num in enumerate(values) if num == max_value]
+    max_values = [values[i] for i in max_indices]
+    max_children = [children[i] for i in max_indices]
+    random.shuffle(max_children)
+    best_child = max_children[0]
+    score = max_values[0]
+    optimal_move = best_child.coords
 
     print("THE BEST SCORE of CHILD IS", best_child.score)
     print("THE BEST CHILD IS " + str(optimal_move))
     # "Best Child is "+str(best_child)
-    return 0, optimal_move, 0
+    return score, optimal_move, 0
 
   # ====================================================================================================================
 
