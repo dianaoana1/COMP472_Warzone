@@ -304,12 +304,15 @@ class Game:
   """Representation of the game state."""
   board: list[list[Unit | None]] = field(default_factory=list)
   next_player: Player = Player.Attacker
-  turns_played: int = 0
+  turns_played: int = 1
+  totalNodes: double = 0
+
   options: Options = field(default_factory=Options)
   stats: Stats = field(default_factory=Stats)
   _attacker_has_ai: bool = True
   _defender_has_ai: bool = True
   fileWriter: WriteToFile = field(default=None)
+
 
   def __post_init__(self):
     """Automatically called after class init to set up the default board state."""
@@ -511,6 +514,7 @@ class Game:
 
       self.set(coords.dst, self.get(coords.src))
       self.set(coords.src, None)
+      print(f"{src} moved to {dst} successfully")
       self.fileWriter.append_to_file(f"\n{src} moved to {dst} successfully")
       return True, "Done"
     self.fileWriter.append_to_file("\ninvalid move!")
@@ -549,8 +553,10 @@ class Game:
     """Pretty text representation of the game."""
     dim = self.options.dim
     output = ""
+    if self.turns_played != 1:
+      output += "\n"
     output += f"Next player: {self.next_player.name}\n"
-    output += f"Turns played: {self.turns_played}\n"
+    output += f"Turn # {self.turns_played}\n"
     coord = Coord()
     output += "\n   "
     for col in range(dim):
@@ -619,7 +625,7 @@ class Game:
           print(f"Player {self.next_player.name}: ", end='')
           self.fileWriter.append_to_file(f"\nPlayer {self.next_player.name}: ")
           print(result)
-          self.fileWriter.append_to_file("\n" + result)
+          self.fileWriter.append_to_file(result + "\n")
           self.next_turn()
           break
         else:
@@ -633,7 +639,9 @@ class Game:
       (success, result) = self.perform_move(mv)
       if success:
         print(f"Computer {self.next_player.name}: ", end='')
+        self.fileWriter.append_to_file(f"\nComputer {self.next_player.name}: ")
         print(result)
+        self.fileWriter.append_to_file(result + "\n")
         self.next_turn()
     return mv
 
@@ -767,38 +775,78 @@ class Game:
             nbF2 += 1
         else:
           break
+    firstPart = 3 * nbV1 + 3 * nbT1 + 3 * nbF1 + 3 * nbP1 + 9999 * nbAi1
+    secondPart = 3 * nbV2 + 3 * nbT2 + 3 * nbF2 + 3 * nbP2 + 9999 * nbAi2
     if main_player == Player.Defender:
-      firstPart = 3 * nbV1 + 3 * nbT1 + 3 * nbF1 + 3 * nbP1 + 9999 * nbAi1
-      secondPart = 3 * nbV2 + 3 * nbT2 + 3 * nbF2 + 3 * nbP2 + 9999 * nbAi2
+      score = firstPart - secondPart
     else:
-      firstPart = 3 * nbV2 + 3 * nbT2 + 3 * nbF2 + 3 * nbP2 + 9999 * nbAi2
-      secondPart = 3 * nbV1 + 3 * nbT1 + 3 * nbF1 + 3 * nbP1 + 9999 * nbAi1
-    return firstPart - secondPart
+      score = secondPart - firstPart
+    return score
 
-  def e1(self, main_player, move_candidates):
+  def e1(self, main_player, moves):
     """Calculates the heuristic score depending on the number of moves available and the number of pieces on the board"""
     score = 0
     #Defender
     nbMoves1 =  0
     nbUnits1 = 0
+    nbT1 = 0
+    nbF1 = 0
+    nbP1 = 0
+    nbAi1 = 0
+    defenderSide = 0
+    if main_player == Player.Defender:
+      nbMoves1 =   len(moves)
+    else:
+      nbMoves1 = len(list(self.move_candidates()))
+    nbUnits1 = len(list(self.player_units(Player.Defender)))
 
     # Attacker
     nbMoves2 = 0
     nbUnits2 = 0
-    # if main_player == Player.Defender:
-    #   nbMoves1 = len(move_candidates)
-    #   nbUnits1 = len(list(self.player_units(main_player)))
-    #   nbMoves2 = len(list(self.move_candidates()))
-    #   nbUnits2 = len(list(self.player_units(self.next_player)))
-    # else:
-    nbMoves1 = len(list(self.move_candidates()))
-    nbUnits1 = len(list(self.player_units(self.next_player)))
-    nbMoves2 = len(move_candidates)
-    nbUnits2 = len(list(self.player_units(main_player)))
+    nbV2 = 0
+    nbF2 = 0
+    nbP2 = 0
+    nbAi2 = 0
+    attackerSide = 0
+    if main_player == Player.Attacker:
+      nbMoves2 =   len(moves)
+    else:
+      nbMoves2 = len(list(self.move_candidates()))
+    nbUnits2 = len(list(self.player_units(Player.Attacker)))
 
-    score = self.e0(main_player) + nbMoves1 + nbUnits1 - nbMoves2 + nbUnits2
+    for player in [Player.Attacker, Player.Defender]:
+      for type in self.player_units(player):
+        if type[1].type == UnitType.AI:
+          if player == Player.Defender:
+            nbAi1 += 1
+          else:
+            nbAi2 += 1
+        elif type[1].type == UnitType.Tech:
+          nbT1 += 1
+        elif type[1].type == UnitType.Virus:
+          nbV2 += 1
+        elif type[1].type == UnitType.Program:
+          if player == Player.Defender:
+            nbP1 += 1
+          else:
+            nbP2 += 1
+        elif type[1].type == UnitType.Firewall:
+          if player == Player.Defender:
+            nbF1 += 1
+          else:
+            nbF2 += 1
+        else:
+          break
 
-    return score
+    defenderSide = 500 * nbT1 + 50 * nbF1 + 100 * nbP1 + 99999 * nbAi1
+    attackerSide = 500 * nbV2 + 50 * nbF2 + 100 * nbP2 + 99999 * nbAi2
+
+    if main_player == Player.Defender:
+      totalNbPieces = defenderSide - attackerSide
+    else:
+      totalNbPieces = attackerSide - defenderSide
+
+    return totalNbPieces + nbMoves1 + nbUnits1 - nbMoves2 + nbUnits2
 
   def e2(self, main_player):
     """Heuristic e2 to calculate the score of each node"""
@@ -874,71 +922,49 @@ class Game:
 
     return firstPart + totalHealth1 - (secondPart + totalHealth2)
 
-
-  def printPreorder(self, root, depth=0):
-    """Prints preorder of tree"""
-    if root:
-      print("  " * depth +
-            f"[Depth {depth}] {root.currentPlayer}: {str(root.score)}")
-      for child in root.children:
-        self.printPreorder(child, depth + 1)
-
-  def order(self, root, depth=0):
-    """Print order of scores in tree"""
-    if root:
-      for child in root.children:
-        print(child.score)
-    print("------------------")
-
-  def getMaxVal(self, root, mainList, tempList):
-    """Gets the Max value for each branch"""
-    if len(root.children) == 0:
-      # print(root.score)
-      tempList.append(root.score)
-      return tempList
-    tempList = []
-    for child in root.children:
-      tempList = self.getMaxVal(child, mainList, tempList)
-    mainList.append(max(tempList))
-    return mainList
-
   def createTree(self):
     """Creates a tree of nodes"""
     move_candidates = list(self.move_candidates())
+    currentPlayer = None
+    if self.next_player == Player.Attacker:
+      currentPlayer = Player.Defender
+    else:
+      currentPlayer = Player.Attacker
     root = Node(value=move_candidates,
                 current_Depth=0,
-                current_player=Player.Attacker)
-    # gameCopy = self.clone()
-    root = self.addNode(root, 0, self, self.next_player)
-    numberChild = 0
-    num = []
-    num = self.getMaxVal(root, num, tempList=None)
-    return root
+                current_player=currentPlayer)
+    root, total, listNodes, averageNodes = self.addNode(root, 0, self, self.next_player, 1, [0,0,0,0], 0)
+    totalAvg = averageNodes/total
+    return root, total, listNodes, totalAvg
 
-
-
-  def addNode(self, root, current_depth, game_copy, main_player):
+  def addNode(self, root, current_depth, game_copy, main_player, total, listNodes, averageNodes):
     """Adds a node to the tree"""
     if current_depth + 1 > game_copy.options.max_depth - 1 or self.has_winner(
     ):
-      return root
+      total += 1
+      averageNodes += len(root.value)
+      listNodes[current_depth] += 1
+      return root, total, listNodes, averageNodes
     currentDepth = current_depth + 1
     for move in root.value:
       gameCopy = game_copy.clone()
       gameCopy.computer_perform_move(move)
-      heuristic_score = gameCopy.e2(main_player)
       current_Player = gameCopy.next_player
       gameCopy.next_turn()
+      # heuristic_score = gameCopy.e2(main_player)
       move_candidates = list(gameCopy.move_candidates())
-      # heuristic_score = gameCopy.e1(main_player, move_candidates)
+      heuristic_score = gameCopy.e1(main_player, move_candidates)
       child = Node(value=move_candidates,
                    coords_Pair=move,
                    current_Depth=currentDepth,
                    heuristic_score=heuristic_score,
                    current_player=str(current_Player))
-      newChild = gameCopy.addNode(child, currentDepth, gameCopy, main_player)
+      newChild, total, listNodes, averageNodes = gameCopy.addNode(child, currentDepth, gameCopy, main_player, total, listNodes, averageNodes)
+      total += 1
+      listNodes[current_depth] += 1
       root.add_child(newChild)
-    return root
+      averageNodes += len(child.children)
+    return root, total, listNodes, averageNodes
 
   def random_move(self) -> Tuple[int, CoordPair | None, float]:
     """Returns a random move."""
@@ -950,43 +976,61 @@ class Game:
     else:
       return 0, None, 0
 
+  def format_numbers(self, number):
+    """Formats numbers correctly to print out."""
+    if number >= 1000000:
+      format = f'{number / 1000000:.2f}M'
+    elif number >= 1000:
+      format = f'{number / 1000:.2f}k'
+    else:
+      format = f'{number:.0f}'
+
+    return format
+
   def suggest_move(self) -> CoordPair | None:
     """Suggest the next move using minimax alpha beta. TODO: REPLACE RANDOM_MOVE WITH PROPER GAME LOGIC!!!"""
     start_time = datetime.now()
 
-    #(score, move, avg_depth) = self.random_move()
-
-    # root = self.createTree()
-    root = self.createTree()
+    root, total, listNodes, averageNodes = self.createTree()
     (score, move, avg_depth) = self.optimal_move_minimax(root, 3)
-    # (score, move, avg_depth) = self.optimal_move_minimax(root, 3,MIN_HEURISTIC_SCORE)
 
-    print(move)
+    output = ""
+    output2 = ""
+    for index, num in enumerate(listNodes):
+      calcul = num/total*100
+      if calcul < 1:
+        output2 += f'{index+1}={calcul:.1f}% '
+      else:
+        output2 += f'{index+1}={calcul:.0f}% '
+      num = self.format_numbers(num)
+      output += f"{index+1}={num} "
 
+    total = self.format_numbers(total)
     elapsed_seconds = (datetime.now() - start_time).total_seconds()
     self.stats.total_seconds += elapsed_seconds
+
+    # Print statements
     print(f"Heuristic score: {score}")
-    print(f"Average recursive depth: {avg_depth:0.1f}")
-    print(f"Evals per depth: ", end='')
-    for k in sorted(self.stats.evaluations_per_depth.keys()):
-      print(f"{k}:{self.stats.evaluations_per_depth[k]} ", end='')
-    print()
-    total_evals = sum(self.stats.evaluations_per_depth.values())
-    if self.stats.total_seconds > 0:
-      print(
-          f"Eval perf.: {total_evals / self.stats.total_seconds / 1000:0.1f}k/s"
-      )
+    print(f"Elapsed time: {elapsed_seconds:0.1f}s")
+    print(f"Cumulative evals: {total}")
+    print(f"Cumulative evals by depth: {output}")
+    print(f"Cumulative % evals by depth: {output2}")
+    print(f"Average branching factor: {averageNodes:.1f}")
+
+    # Write to file
+
+    self.fileWriter.append_to_file(f"\nHeuristic score: {score}")
+    self.fileWriter.append_to_file(f"\nElapsed time: {elapsed_seconds:0.1f}s")
+    self.fileWriter.append_to_file(f"\nCumulative evals: {total}")
+    self.fileWriter.append_to_file(f"\nCumulative evals by depth: {output}")
+    self.fileWriter.append_to_file(f"\nCumulative % evals by depth: {output2}")
+    self.fileWriter.append_to_file(f"\nAverage branching factor: {averageNodes:.1f}")
 
     # if self.alpha_beta=True:
     #   alpha_beta()
     # else:
     # optimal_move()
-    # 55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
 
-    # print('in suggest move'+str(minimaxBest))
-    # best_child=minimax_result 2222222
-
-    print(f"Elapsed time: {elapsed_seconds:0.1f}s")
     return move
 
     # ======================================= MINIMAX LOGIC ==========================================================
@@ -1068,8 +1112,6 @@ class Game:
     score = max_values[0]
     optimal_move = best_child.coords
 
-    print("THE BEST SCORE of CHILD IS", best_child.score)
-    print("THE BEST CHILD IS " + str(optimal_move))
     # "Best Child is "+str(best_child)
     return score, optimal_move, 0
 
@@ -1136,16 +1178,8 @@ class Game:
 
 ##############################################################################################################
 
-# def printPreorder(root, depth):
-#   if root:
-#     print("  " * depth + str(root.score))
-#     for child in root.children:
-#       printPreorder(child, depth + 1)
-
-
 def main():
   # parse command line arguments
-  global fileName
   parser = argparse.ArgumentParser(
       prog='ai_wargame',
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -1194,8 +1228,8 @@ def main():
 
     winner = game.has_winner()
     if winner is not None:
-      print(f"{winner.name} wins!")
-      file_writer.append_to_file(f"\n{winner.name} wins!")
+      print(f"{winner.name} wins in {game.turns_played-1} turns!")
+      file_writer.append_to_file(f"\n{winner.name} wins in {game.turns_played-1} turns!")
       break
     if game.options.game_type == GameType.AttackerVsDefender:
       game.human_turn()
@@ -1212,7 +1246,6 @@ def main():
         print("Computer doesn't know what to do!!!")
         file_writer.append_to_file("\nComputer doesn't know what to do!!!")
         exit(1)
-
 
 ##############################################################################################################
 
