@@ -1087,6 +1087,9 @@ def main():
   # the main game loop
   while True:
     print(game)
+    # print the game :)
+    file_writer.append_to_file(game.to_string())
+
     winner = game.has_winner()
     if winner is not None:
       print(f"{winner.name} wins!")
