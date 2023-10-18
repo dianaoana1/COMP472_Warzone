@@ -1008,6 +1008,7 @@ class Game:
       num = self.format_numbers(num)
       output += f"{index+1}={num} "
 
+    total_evals = total
     total = self.format_numbers(total)
     elapsed_seconds = (datetime.now() - start_time).total_seconds()
     self.stats.total_seconds += elapsed_seconds
@@ -1020,6 +1021,10 @@ class Game:
     print(f"Cumulative % evals by depth: {output2}")
     print(f"Average branching factor: {averageNodes:.1f}")
 
+    if self.stats.total_seconds > 0:
+      final = total_evals / self.stats.total_seconds / 1000
+      print(f"Eval perf.: {final}k/s")
+
     # Write to file
 
     self.fileWriter.append_to_file(f"\nHeuristic score: {score}")
@@ -1028,6 +1033,8 @@ class Game:
     self.fileWriter.append_to_file(f"\nCumulative evals by depth: {output}")
     self.fileWriter.append_to_file(f"\nCumulative % evals by depth: {output2}")
     self.fileWriter.append_to_file(f"\nAverage branching factor: {averageNodes:.1f}")
+    if self.stats.total_seconds > 0:
+      self.fileWriter.append_to_file(f"\nEval perf.: {final:0.1f}k/s")
 
     # if self.alpha_beta=True:
     #   alpha_beta()
