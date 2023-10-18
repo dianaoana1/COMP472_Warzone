@@ -730,6 +730,7 @@ class Game:
     """Heuristic e0 to calculate the score of each node"""
     # All of the variables needed to calculate the heuristic score
     # Player 1 being the defender/computer
+
     nbV1 = 0
     nbV2 = 0
     nbT1 = 0
@@ -747,6 +748,7 @@ class Game:
         if type[1].type == UnitType.AI:
           if player == Player.Defender:
             nbAi1 += 1
+
           else:
             nbAi2 += 1
         elif type[1].type == UnitType.Tech:
@@ -797,6 +799,81 @@ class Game:
     score = self.e0(main_player) + nbMoves1 + nbUnits1 - nbMoves2 + nbUnits2
 
     return score
+
+  def e2(self, main_player):
+    """Heuristic e2 to calculate the score of each node"""
+    # All of the variables needed to calculate the heuristic score
+    # Player 1 being the defender/computer
+    nbV1 = 0
+    nbV2 = 0
+    nbT1 = 0
+    nbT2 = 0
+    nbF1 = 0
+    nbF2 = 0
+    nbP1 = 0
+    nbP2 = 0
+    nbAi1 = 0
+    nbAi2 = 0
+    firstPart = 0
+    secondPart = 0
+    sumOfAllHealthValues1 = 0
+    sumOfAllHealthValues2 = 0
+
+    # Counting the number of units of health of each type
+    for coord, unit in self.player_units(main_player):
+      unit_health = unit.health
+      if main_player == Player.Defender:
+        sumOfAllHealthValues1 += unit_health
+      else:
+        sumOfAllHealthValues2 += unit_health
+
+    # ////////////////////////////////////////////////////
+
+    for player in [Player.Attacker, Player.Defender]:
+      for type in self.player_units(player):
+
+        if type[1].type == UnitType.AI:
+
+          if player == Player.Defender:
+            nbAi1 += 1
+          else:
+            nbAi2 += 1
+
+        elif type[1].type == UnitType.Tech:
+          nbT1 += 1
+
+        elif type[1].type == UnitType.Virus:
+          nbV2 += 1
+
+        elif type[1].type == UnitType.Program:
+          if player == Player.Defender:
+            nbP1 += 1
+          else:
+            nbP2 += 1
+
+        elif type[1].type == UnitType.Firewall:
+          if player == Player.Defender:
+            nbF1 += 1
+          else:
+            nbF2 += 1
+
+        else:
+          break
+
+    if main_player == Player.Defender:
+      firstPart = 4 * nbV1 + 3 * nbT1 + 2 * nbF1 + 3 * nbP1 + 8000 * nbAi1
+      secondPart = 4 * nbV2 + 3 * nbT2 + 2 * nbF2 + 3 * nbP2 + 8000 * nbAi2
+      totalHealth1 = sumOfAllHealthValues1
+      totalHealth2 = sumOfAllHealthValues2
+
+    else:
+      firstPart = 4 * nbV2 + 3 * nbT2 + 2 * nbF2 + 3 * nbP2 + 8000 * nbAi2
+      secondPart = 4 * nbV1 + 3 * nbT1 + 2 * nbF1 + 3 * nbP1 + 8000 * nbAi1
+      totalHealth1 = sumOfAllHealthValues2
+      totalHealth2 = sumOfAllHealthValues1
+
+    return firstPart + totalHealth1 - (secondPart + totalHealth2)
+
 
   def printPreorder(self, root, depth=0):
     """Prints preorder of tree"""
@@ -849,10 +926,11 @@ class Game:
     for move in root.value:
       gameCopy = game_copy.clone()
       gameCopy.computer_perform_move(move)
+      heuristic_score = gameCopy.e2(main_player)
       current_Player = gameCopy.next_player
       gameCopy.next_turn()
       move_candidates = list(gameCopy.move_candidates())
-      heuristic_score = gameCopy.e1(main_player, move_candidates)
+      # heuristic_score = gameCopy.e1(main_player, move_candidates)
       child = Node(value=move_candidates,
                    coords_Pair=move,
                    current_Depth=currentDepth,
@@ -1111,6 +1189,9 @@ def main():
   # the main game loop
   while True:
     print(game)
+    # print the game :)
+    file_writer.append_to_file(game.to_string())
+
     winner = game.has_winner()
     if winner is not None:
       print(f"{winner.name} wins!")
