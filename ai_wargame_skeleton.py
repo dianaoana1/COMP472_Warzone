@@ -305,8 +305,6 @@ class Game:
   board: list[list[Unit | None]] = field(default_factory=list)
   next_player: Player = Player.Attacker
   turns_played: int = 1
-  totalNodes: double = 0
-
   options: Options = field(default_factory=Options)
   stats: Stats = field(default_factory=Stats)
   _attacker_has_ai: bool = True
@@ -838,8 +836,8 @@ class Game:
         else:
           break
 
-    defenderSide = 500 * nbT1 + 50 * nbF1 + 100 * nbP1 + 99999 * nbAi1
-    attackerSide = 500 * nbV2 + 50 * nbF2 + 100 * nbP2 + 99999 * nbAi2
+    defenderSide = 500 * nbT1 + 100 * nbF1 + 100 * nbP1 + 99999 * nbAi1
+    attackerSide = 500 * nbV2 + 100 * nbF2 + 100 * nbP2 + 99999 * nbAi2
 
     if main_player == Player.Defender:
       totalNbPieces = defenderSide - attackerSide
@@ -922,7 +920,7 @@ class Game:
 
     return firstPart + totalHealth1 - (secondPart + totalHealth2)
 
-  def createTree(self):
+  def createTree(self, heuristicFunction):
     """Creates a tree of nodes"""
     move_candidates = list(self.move_candidates())
     currentPlayer = None
@@ -933,11 +931,11 @@ class Game:
     root = Node(value=move_candidates,
                 current_Depth=0,
                 current_player=currentPlayer)
-    root, total, listNodes, averageNodes = self.addNode(root, 0, self, self.next_player, 1, [0,0,0,0], 0)
+    root, total, listNodes, averageNodes = self.addNode(root, 0, self, self.next_player, 1, [0,0,0,0], 0, heuristicFunction)
     totalAvg = averageNodes/total
     return root, total, listNodes, totalAvg
 
-  def addNode(self, root, current_depth, game_copy, main_player, total, listNodes, averageNodes):
+  def addNode(self, root, current_depth, game_copy, main_player, total, listNodes, averageNodes, heuristicFunction):
     """Adds a node to the tree"""
     if current_depth + 1 > game_copy.options.max_depth - 1 or self.has_winner(
     ):
@@ -951,15 +949,20 @@ class Game:
       gameCopy.computer_perform_move(move)
       current_Player = gameCopy.next_player
       gameCopy.next_turn()
-      # heuristic_score = gameCopy.e2(main_player)
       move_candidates = list(gameCopy.move_candidates())
-      heuristic_score = gameCopy.e1(main_player, move_candidates)
+      heuristic_score = 0
+      if heuristicFunction == 1:
+        heuristic_score = gameCopy.e0(main_player)
+      elif heuristicFunction == 2:
+        heuristic_score = gameCopy.e1(main_player, move_candidates)
+      else:
+        heuristic_score = gameCopy.e2(main_player)
       child = Node(value=move_candidates,
                    coords_Pair=move,
                    current_Depth=currentDepth,
                    heuristic_score=heuristic_score,
                    current_player=str(current_Player))
-      newChild, total, listNodes, averageNodes = gameCopy.addNode(child, currentDepth, gameCopy, main_player, total, listNodes, averageNodes)
+      newChild, total, listNodes, averageNodes = gameCopy.addNode(child, currentDepth, gameCopy, main_player, total, listNodes, averageNodes, heuristicFunction)
       total += 1
       listNodes[current_depth] += 1
       root.add_child(newChild)
@@ -991,7 +994,7 @@ class Game:
     """Suggest the next move using minimax alpha beta. TODO: REPLACE RANDOM_MOVE WITH PROPER GAME LOGIC!!!"""
     start_time = datetime.now()
 
-    root, total, listNodes, averageNodes = self.createTree()
+    root, total, listNodes, averageNodes = self.createTree(1)
     (score, move, avg_depth) = self.optimal_move_minimax(root, 3)
 
     output = ""
