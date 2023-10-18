@@ -773,7 +773,33 @@ class Game:
       secondPart = 3 * nbV1 + 3 * nbT1 + 3 * nbF1 + 3 * nbP1 + 9999 * nbAi1
     return firstPart - secondPart
 
+  def e1(self, main_player, move_candidates):
+    """Calculates the heuristic score depending on the number of moves available and the number of pieces on the board"""
+    score = 0
+    #Defender
+    nbMoves1 =  0
+    nbUnits1 = 0
+
+    # Attacker
+    nbMoves2 = 0
+    nbUnits2 = 0
+    # if main_player == Player.Defender:
+    #   nbMoves1 = len(move_candidates)
+    #   nbUnits1 = len(list(self.player_units(main_player)))
+    #   nbMoves2 = len(list(self.move_candidates()))
+    #   nbUnits2 = len(list(self.player_units(self.next_player)))
+    # else:
+    nbMoves1 = len(list(self.move_candidates()))
+    nbUnits1 = len(list(self.player_units(self.next_player)))
+    nbMoves2 = len(move_candidates)
+    nbUnits2 = len(list(self.player_units(main_player)))
+
+    score = self.e0(main_player) + nbMoves1 + nbUnits1 - nbMoves2 + nbUnits2
+
+    return score
+
   def printPreorder(self, root, depth=0):
+    """Prints preorder of tree"""
     if root:
       print("  " * depth +
             f"[Depth {depth}] {root.currentPlayer}: {str(root.score)}")
@@ -781,12 +807,14 @@ class Game:
         self.printPreorder(child, depth + 1)
 
   def order(self, root, depth=0):
+    """Print order of scores in tree"""
     if root:
       for child in root.children:
         print(child.score)
     print("------------------")
 
   def getMaxVal(self, root, mainList, tempList):
+    """Gets the Max value for each branch"""
     if len(root.children) == 0:
       # print(root.score)
       tempList.append(root.score)
@@ -802,16 +830,12 @@ class Game:
     move_candidates = list(self.move_candidates())
     root = Node(value=move_candidates,
                 current_Depth=0,
-                current_player=str(Player.Attacker))
-    gameCopy = self.clone()
-    root = self.addNode(root, 0, gameCopy, self.next_player)
+                current_player=Player.Attacker)
+    # gameCopy = self.clone()
+    root = self.addNode(root, 0, self, self.next_player)
     numberChild = 0
     num = []
     num = self.getMaxVal(root, num, tempList=None)
-    # self.printPreorder(root, 0)
-    # for child in root.children:
-    #   numberChild += len(child.children)
-    # print("Tree size: ", numberChild)
     return root
 
 
@@ -825,10 +849,10 @@ class Game:
     for move in root.value:
       gameCopy = game_copy.clone()
       gameCopy.computer_perform_move(move)
-      heuristic_score = gameCopy.e0(main_player)
       current_Player = gameCopy.next_player
       gameCopy.next_turn()
       move_candidates = list(gameCopy.move_candidates())
+      heuristic_score = gameCopy.e1(main_player, move_candidates)
       child = Node(value=move_candidates,
                    coords_Pair=move,
                    current_Depth=currentDepth,
