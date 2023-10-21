@@ -951,11 +951,11 @@ class Game:
             gameCopy.next_turn()
             move_candidates = list(gameCopy.move_candidates())
             heuristic_score = 0
-            if heuristicFunction == 1:
+            if heuristicFunction == 0:
                 heuristic_score = gameCopy.e0(main_player)
-            elif heuristicFunction == 2:
+            elif heuristicFunction == 1:
                 heuristic_score = gameCopy.e1(main_player, move_candidates)
-            else:
+            elif heuristicFunction == 2:
                 heuristic_score = gameCopy.e2(main_player)
             child = Node(value=move_candidates,
                          coords_Pair=move,
@@ -974,7 +974,7 @@ class Game:
     def random_move(self) -> Tuple[int, CoordPair | None, float]:
         """Returns a random move."""
         move_candidates = list(self.move_candidates())
-        self.createTree()
+        # self.createTree()
         random.shuffle(move_candidates)
         if len(move_candidates) > 0:
             return 0, move_candidates[0], 1
@@ -996,7 +996,7 @@ class Game:
         """Suggest the next move using minimax alpha beta. TODO: REPLACE RANDOM_MOVE WITH PROPER GAME LOGIC!!!"""
         start_time = datetime.now()
 
-        root, total, listNodes, averageNodes = self.createTree(1)
+        root, total, listNodes, averageNodes = self.createTree(0)
         (score, move, avg_depth) = self.optimal_move_minimax(root, 3)
 
         output = ""
