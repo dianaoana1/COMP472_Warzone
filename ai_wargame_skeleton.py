@@ -932,7 +932,7 @@ class Game:
                     current_Depth=0,
                     current_player=currentPlayer)
         root, total, listNodes, averageNodes = self.addNode(root, 0, self, self.next_player, 1, [0, 0, 0, 0], 0,
-                                                            Options.heuristic)
+                                                            heuristicFunction)
         totalAvg = averageNodes / total
         return root, total, listNodes, totalAvg
 
@@ -998,7 +998,7 @@ class Game:
         start_time = datetime.now()
 
         options_instance = Options()
-        root, total, listNodes, averageNodes = self.createTree(Options.heuristic)
+        root, total, listNodes, averageNodes = self.createTree(int(options_instance.heuristic))
         if (Options.alpha_beta):
           (score, move, avg_depth) = self.optimal_move_alpha_beta(root, options_instance.max_depth)
         else:
@@ -1163,14 +1163,14 @@ class Game:
           eval = self.alpha_beta(child, depth - 1, alpha, beta, False)
 
           alpha = max(alpha, eval)
-          if beta <= alpha:
-            break
+
 
           # check whether the current child heuristic is better, if so assign new child
           if child_score > max_eval:
             max_eval = child_score
             best_child = child
-
+          if beta <= alpha:
+            break
 
 
         return max_eval
@@ -1185,14 +1185,14 @@ class Game:
           eval = self.alpha_beta(child, depth - 1, alpha, beta, True)
 
           beta = min(beta, eval)
-          if beta <= alpha:
-            break
 
           if child_score < min_eval:
             # give to min_eval the smallest h value
             min_eval = min(min_eval, eval)
             best_child = child
 
+          if beta <= alpha:
+            break
       return min_eval
 
       # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1210,7 +1210,7 @@ class Game:
       for child in root.children:
         value = self.alpha_beta(child, depth, MIN_HEURISTIC_SCORE, MAX_HEURISTIC_SCORE, False)
         if value >= optimal_value:
-          # optimal_value = value
+          optimal_value = value
           # best_child = child
           # optimal_move = root.value[index]
           values.append(value)
@@ -1308,7 +1308,7 @@ def main():
     parser.add_argument('--max_turns', type=int, help='max number of turns in the game')
     parser.add_argument('--heuristic', type=int, help='Which heuristic function to use: 0,1,2')
     args = parser.parse_args()
-
+    args.game_type = "attacker"
     # parse the game type
     if args.game_type == "attacker":
       game_type = GameType.AttackerVsComp
