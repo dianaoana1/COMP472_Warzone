@@ -997,78 +997,42 @@ class Game:
     #     return score
 
     def e2(self, main_player):
-        """Heuristic e2 to calculate the score of each node"""
-        # All of the variables needed to calculate the heuristic score
-        # Player 1 being the defender/computer
-        nbV1 = 0
-        nbV2 = 0
-        nbT1 = 0
-        nbT2 = 0
-        nbF1 = 0
-        nbF2 = 0
-        nbP1 = 0
-        nbP2 = 0
-        nbAi1 = 0
-        nbAi2 = 0
-        firstPart = 0
-        secondPart = 0
-        sumOfAllHealthValues1 = 0
-        sumOfAllHealthValues2 = 0
+        # Constants to control the weights
+        weight_ai_health = 100
+        weight_offense = 3
+        weight_defense = 50
 
-        # Counting the number of units of health of each type
-        for coord, unit in self.player_units(main_player):
-            unit_health = unit.health
-            if main_player == Player.Defender:
-                sumOfAllHealthValues1 += unit_health
-            else:
-                sumOfAllHealthValues2 += unit_health
+        # setting up dicts to store unit types and health
+        player1_units = {}
+        player2_units = {}
 
-        # ////////////////////////////////////////////////////
+        # Count the units and their health for both players
+        for coord, unit in self.player_units(Player.Defender):
+            player1_units[unit.type] = unit.health
 
-        for player in [Player.Attacker, Player.Defender]:
-            for type in self.player_units(player):
+        for coord, unit in self.player_units(Player.Attacker):
+            player2_units[unit.type] = unit.health
 
-                if type[1].type == UnitType.AI:
+        # Get AI unit health, default ai health to 0 if no AI
+        ai_health_player1 = player1_units.get(UnitType.AI, 0)
+        ai_health_player2 = player2_units.get(UnitType.AI, 0)
 
-                    if player == Player.Defender:
-                        nbAi1 += 1
-                    else:
-                        nbAi2 += 1
+        # Calculate the offense and defense scores for both players
+        offense_score_player1 = player1_units.get(UnitType.Virus, 0) + player1_units.get(UnitType.Program, 0)
+        defense_score_player1 = player1_units.get(UnitType.Tech, 0) + player1_units.get(UnitType.Firewall, 0)
 
-                elif type[1].type == UnitType.Tech:
-                    nbT1 += 1
+        offense_score_player2 = player2_units.get(UnitType.Virus, 0) + player2_units.get(UnitType.Program, 0)
+        defense_score_player2 = player2_units.get(UnitType.Tech, 0) + player2_units.get(UnitType.Firewall, 0)
 
-                elif type[1].type == UnitType.Virus:
-                    nbV2 += 1
-
-                elif type[1].type == UnitType.Program:
-                    if player == Player.Defender:
-                        nbP1 += 1
-                    else:
-                        nbP2 += 1
-
-                elif type[1].type == UnitType.Firewall:
-                    if player == Player.Defender:
-                        nbF1 += 1
-                    else:
-                        nbF2 += 1
-
-                else:
-                    break
-
+        # Calculate the heuristic score for both players
         if main_player == Player.Defender:
-            firstPart = 4 * nbV1 + 3 * nbT1 + 2 * nbF1 + 3 * nbP1 + 8000 * nbAi1
-            secondPart = 4 * nbV2 + 3 * nbT2 + 2 * nbF2 + 3 * nbP2 + 8000 * nbAi2
-            totalHealth1 = sumOfAllHealthValues1
-            totalHealth2 = sumOfAllHealthValues2
-
+            player1_score = weight_ai_health * ai_health_player1 + weight_offense * offense_score_player1 + weight_defense * defense_score_player1
+            player2_score = weight_ai_health * ai_health_player2 + weight_offense * offense_score_player2 + weight_defense * defense_score_player2
         else:
-            firstPart = 4 * nbV2 + 3 * nbT2 + 2 * nbF2 + 3 * nbP2 + 8000 * nbAi2
-            secondPart = 4 * nbV1 + 3 * nbT1 + 2 * nbF1 + 3 * nbP1 + 8000 * nbAi1
-            totalHealth1 = sumOfAllHealthValues2
-            totalHealth2 = sumOfAllHealthValues1
+            player1_score = weight_ai_health * ai_health_player2 + weight_offense * offense_score_player2 + weight_defense * defense_score_player2
+            player2_score = weight_ai_health * ai_health_player1 + weight_offense * offense_score_player1 + weight_defense * defense_score_player1
 
-        return firstPart + totalHealth1 - (secondPart + totalHealth2)
+        return player1_score - player2_score
 
     def createTree(self, heuristicFunction):
         """Creates a tree of nodes"""
@@ -1456,7 +1420,7 @@ def main():
     parser.add_argument('--max_turns', type=int, help='max number of turns in the game')
     parser.add_argument('--heuristic', type=int, help='Which heuristic function to use: 0,1,2')
     args = parser.parse_args()
-    args.game_type = "at"
+    # args.game_type = "at"
     # parse the game type
     if args.game_type == "attacker":
       game_type = GameType.AttackerVsComp
