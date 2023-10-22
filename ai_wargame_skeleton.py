@@ -255,6 +255,7 @@ class Options:
     max_turns: int | None = 100
     randomize_moves: bool = True
     broker: str | None = None
+    heuristic: int = 0
 
 
 ##############################################################################################################
@@ -931,7 +932,7 @@ class Game:
                     current_Depth=0,
                     current_player=currentPlayer)
         root, total, listNodes, averageNodes = self.addNode(root, 0, self, self.next_player, 1, [0, 0, 0, 0], 0,
-                                                            heuristicFunction)
+                                                            Options.heuristic)
         totalAvg = averageNodes / total
         return root, total, listNodes, totalAvg
 
@@ -964,7 +965,7 @@ class Game:
                          current_player=str(current_Player))
             newChild, total, listNodes, averageNodes = gameCopy.addNode(child, currentDepth, gameCopy, main_player,
                                                                         total, listNodes, averageNodes,
-                                                                        heuristicFunction)
+                                                                        Options.heuristic)
             total += 1
             listNodes[current_depth] += 1
             root.add_child(newChild)
@@ -996,11 +997,12 @@ class Game:
         """Suggest the next move using minimax alpha beta. TODO: REPLACE RANDOM_MOVE WITH PROPER GAME LOGIC!!!"""
         start_time = datetime.now()
 
-        root, total, listNodes, averageNodes = self.createTree(0)
+        options_instance = Options()
+        root, total, listNodes, averageNodes = self.createTree(Options.heuristic)
         if (Options.alpha_beta):
-          (score, move, avg_depth) = self.optimal_move_alpha_beta(root, 3)
+          (score, move, avg_depth) = self.optimal_move_alpha_beta(root, options_instance.max_depth)
         else:
-          (score, move, avg_depth) = self.optimal_move_minimax(root, 3)
+          (score, move, avg_depth) = self.optimal_move_minimax(root, options_instance.max_depth)
 
         output = ""
         output2 = ""
@@ -1296,8 +1298,9 @@ def main():
     parser = argparse.ArgumentParser(
         prog='ai_wargame',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--max_depth', type=int, help='maximum search depth')
+
     parser.add_argument('--max_time', type=float, help='maximum search time')
+    parser.add_argument('--max_depth', type=int, help='maximum search depth')
     parser.add_argument('--game_type',
                         type=str,
                         default="manual",
@@ -1305,6 +1308,7 @@ def main():
     parser.add_argument('--broker', type=str, help='play via a game broker')
     parser.add_argument('--alpha_beta', type=bool, help='play with alpha beta or minimax')
     parser.add_argument('--max_turns', type=int, help='max number of turns in the game')
+    parser.add_argument('--heuristic', type=int, help='Which heuristic function to use: 0,1,2')
     args = parser.parse_args()
 
     # parse the game type
@@ -1331,6 +1335,8 @@ def main():
       options.max_turns = args.max_turns
     if args.alpha_beta is not None:
       options.alpha_beta = args.alpha_beta
+    if args.heuristic is not None:
+      options.heuristic = args.heuristic
 
     fileName = f"gameTrace-{str(options.alpha_beta).lower()}-{str(int(options.max_time))}-{str(options.max_turns)}.txt"
 
