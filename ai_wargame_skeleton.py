@@ -1162,16 +1162,16 @@ class Game:
           # calculate the alpha beta value for children node
           eval = self.alpha_beta(child, depth - 1, alpha, beta, False)
 
+          alpha = max(alpha, eval)
+          if beta <= alpha:
+            break
+
           # check whether the current child heuristic is better, if so assign new child
           if child_score > max_eval:
             max_eval = child_score
             best_child = child
 
-          alpha = max(alpha, eval)
-          print("max player alpha: " + str(alpha) + " beta: " + str(beta) + " eval: " + str(eval))
-          if beta <= alpha:
-            print("max broke")
-            break
+
 
         return max_eval
 
@@ -1184,16 +1184,14 @@ class Game:
           child_score = child.score
           eval = self.alpha_beta(child, depth - 1, alpha, beta, True)
 
+          beta = min(beta, eval)
+          if beta <= alpha:
+            break
+
           if child_score < min_eval:
             # give to min_eval the smallest h value
             min_eval = min(min_eval, eval)
             best_child = child
-
-          beta = min(beta, eval)
-          print("min player alpha: " + str(alpha) + " beta: " + str(beta) + " eval: " + str(eval))
-          if beta <= alpha:
-            print("min broke")
-            break
 
       return min_eval
 
