@@ -251,11 +251,11 @@ class Options:
     min_depth: int | None = 2
     max_time: float | None = 5.0
     game_type: GameType = GameType.AttackerVsDefender
-    alpha_beta: bool = True
+    alpha_beta: bool = False
     max_turns: int | None = 100
     randomize_moves: bool = True
     broker: str | None = None
-    heuristic: int = 0
+    heuristic: int = 1
 
 
 ##############################################################################################################
@@ -632,7 +632,7 @@ class Game:
 
     def computer_turn(self) -> CoordPair | None:
         """Computer plays a move."""
-        mv = self.suggest_move()
+        mv, msg = self.suggest_move()
         if mv is not None:
             (success, result) = self.perform_move(mv)
             if success:
@@ -669,7 +669,7 @@ class Game:
             else:
                 self._defender_has_ai = False
 
-        return mv
+        return mv,msg
 
     def player_units(self, player: Player) -> Iterable[Tuple[Coord, Unit]]:
         """Iterates over all units belonging to a player."""
@@ -838,7 +838,7 @@ class Game:
             nbMoves1 = len(moves)
         else:
             nbMoves1 = len(list(self.move_candidates()))
-        nbUnits1 = len(list(self.player_units(Player.Defender)))
+        # nbUnits1 = len(list(self.player_units(Player.Defender)))
 
         # Attacker
         nbMoves2 = 0
@@ -852,7 +852,7 @@ class Game:
             nbMoves2 = len(moves)
         else:
             nbMoves2 = len(list(self.move_candidates()))
-        nbUnits2 = len(list(self.player_units(Player.Attacker)))
+        # nbUnits2 = len(list(self.player_units(Player.Attacker)))
 
         for player in [Player.Attacker, Player.Defender]:
             for type in self.player_units(player):
@@ -885,7 +885,7 @@ class Game:
             totalNbPieces = defenderSide - attackerSide
         else:
             totalNbPieces = attackerSide - defenderSide
-        return totalNbPieces + nbMoves1 + nbUnits1 - nbMoves2 + nbUnits2
+        return totalNbPieces + nbMoves1 - nbMoves2
 
     def e2(self, main_player):
         """Heuristic e2 to calculate the score of each node"""
@@ -1006,7 +1006,7 @@ class Game:
                          current_player=str(current_Player))
             newChild, total, listNodes, averageNodes = gameCopy.addNode(child, currentDepth, gameCopy, main_player,
                                                                         total, listNodes, averageNodes,
-                                                                        Options.heuristic)
+                                                                        heuristicFunction)
             total += 1
             listNodes[current_depth] += 1
             root.add_child(newChild)
@@ -1037,11 +1037,12 @@ class Game:
     def suggest_move(self) -> CoordPair | None:
         """Suggest the next move using minimax alpha beta. TODO: REPLACE RANDOM_MOVE WITH PROPER GAME LOGIC!!!"""
         start_time = datetime.now()
-        root, total, listNodes, averageNodes = self.createTree(self.options.heuristic)
+        num = int(self.options.heuristic)
+        root, total, listNodes, averageNodes = self.createTree(num)
         if self.options.alpha_beta:
-          (score, move) = self.optimal_move_alpha_beta(root, self.options.max_depth)
+            (score, move) = self.optimal_move_alpha_beta(root, self.options.max_depth)
         else:
-          (score, move) = self.optimal_move_minimax(root, self.options.max_depth)
+            (score, move) = self.optimal_move_minimax(root, self.options.max_depth)
 
         output = ""
         output2 = ""
@@ -1071,8 +1072,9 @@ class Game:
             final = total_evals / self.stats.total_seconds / 1000
             print(f"Eval perf.: {final}k/s")
 
-        # Write to file
 
+
+        # Write to file
         self.fileWriter.append_to_file(f"\nHeuristic score: {score}")
         self.fileWriter.append_to_file(f"\nElapsed time: {elapsed_seconds:0.1f}s")
         self.fileWriter.append_to_file(f"\nCumulative evals: {total}")
@@ -1082,12 +1084,18 @@ class Game:
         if self.stats.total_seconds > 0:
             self.fileWriter.append_to_file(f"\nEval perf.: {final:0.1f}k/s")
 
+        if elapsed_seconds >= self.options.max_time:
+            if self.next_player == Player.Defender:
+                self._defender_has_ai = False
+            else:
+                self._attacker_has_ai = False
+            return None, "Time up"
         # if self.alpha_beta=True:
         #   alpha_beta()
         # else:
         # optimal_move()
 
-        return move
+        return move, ""
 
         # ======================================= MINIMAX LOGIC ==========================================================
 
@@ -1176,96 +1184,93 @@ class Game:
 
     # ======================================= ALPHA BETA LOGIC ==========================================================
     def alpha_beta(self, node, depth, alpha, beta, max_player):
-      # when calling at first the method we are passing the root node since createTree returns it
-      # max_player is a booleean indicating if its the max player's turn
-      # pass the mini/max value till noww
+        # when calling at first the method we are passing the root node since createTree returns it
+        # max_player is a booleean indicating if its the max player's turn
+        # pass the mini/max value till noww
 
-      # reached depth 0 or have no children
-      # if node =None
-      if depth == 0 or not node.children:
-        # return self.score
-        return node.score
+        # reached depth 0 or have no children
+        # if node =None
+        if depth == 0 or not node.children:
+            # return self.score
+            return node.score
 
-      # max_eval = MIN_HEURISTIC_SCORE
+        # max_eval = MIN_HEURISTIC_SCORE
 
-      # in max player turn
-      if max_player:
-        max_eval = MIN_HEURISTIC_SCORE
-        best_child = None
-        # if  len(node.children[0].children) == 0:
-        #   self.order(node)
-        for child in node.children:
-          # put the score of the child we are at in a var
-          child_score = child.score
+        # in max player turn
+        if max_player:
+            max_eval = MIN_HEURISTIC_SCORE
+            best_child = None
+            # if  len(node.children[0].children) == 0:
+            #   self.order(node)
+            for child in node.children:
+                # put the score of the child we are at in a var
+                child_score = child.score
 
-          # calculate the alpha beta value for children node
-          eval = self.alpha_beta(child, depth - 1, alpha, beta, False)
+                # calculate the alpha beta value for children node
+                eval = self.alpha_beta(child, depth - 1, alpha, beta, False)
 
-          alpha = max(alpha, eval)
-          if beta <= alpha:
-            break
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
 
-          # check whether the current child heuristic is better, if so assign new child
-          if child_score > max_eval:
-            max_eval = child_score
-            best_child = child
+                # check whether the current child heuristic is better, if so assign new child
+                if child_score > max_eval:
+                    max_eval = child_score
+                    best_child = child
 
+            return max_eval
 
+        else:
+            min_eval = MAX_HEURISTIC_SCORE
+            best_child = None
+            # if node.children[0].children is None:
+            #   self.order(node)
+            for child in node.children:
+                child_score = child.score
+                eval = self.alpha_beta(child, depth - 1, alpha, beta, True)
 
-        return max_eval
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break
 
-      else:
-        min_eval = MAX_HEURISTIC_SCORE
-        best_child = None
-        # if node.children[0].children is None:
-        #   self.order(node)
-        for child in node.children:
-          child_score = child.score
-          eval = self.alpha_beta(child, depth - 1, alpha, beta, True)
+                if child_score < min_eval:
+                    # give to min_eval the smallest h value
+                    min_eval = min(min_eval, eval)
+                    best_child = child
 
-          beta = min(beta, eval)
-          if beta <= alpha:
-            break
+        return min_eval
 
-          if child_score < min_eval:
-            # give to min_eval the smallest h value
-            min_eval = min(min_eval, eval)
-            best_child = child
-
-
-      return min_eval
-
-      # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     def optimal_move_alpha_beta(self, root,
                                 depth) -> Tuple[int, CoordPair | None, float]:
 
-      # root = self.createTree()
-      print("Using Alpha beta")
-      optimal_move = None
-      optimal_value = MIN_HEURISTIC_SCORE
-      best_child = None
-      values = []
-      children = []
-      for child in root.children:
-        value = self.alpha_beta(child, depth, MIN_HEURISTIC_SCORE, MAX_HEURISTIC_SCORE, False)
-        if value >= optimal_value:
-          # optimal_value = value
-          # best_child = child
-          # optimal_move = root.value[index]
-          values.append(value)
-          children.append(child)
+        # root = self.createTree()
+        print("Using Alpha beta")
+        optimal_move = None
+        optimal_value = MIN_HEURISTIC_SCORE
+        best_child = None
+        values = []
+        children = []
+        for child in root.children:
+            value = self.alpha_beta(child, depth, MIN_HEURISTIC_SCORE, MAX_HEURISTIC_SCORE, False)
+            if value >= optimal_value:
+                # optimal_value = value
+                # best_child = child
+                # optimal_move = root.value[index]
+                values.append(value)
+                children.append(child)
 
-      max_value = max(values)
-      max_indices = [i for i, num in enumerate(values) if num == max_value]
-      max_values = [values[i] for i in max_indices]
-      max_children = [children[i] for i in max_indices]
-      random.shuffle(max_children)
-      best_child = max_children[0]
-      score = max_values[0]
-      optimal_move = best_child.coords
+        max_value = max(values)
+        max_indices = [i for i, num in enumerate(values) if num == max_value]
+        max_values = [values[i] for i in max_indices]
+        max_children = [children[i] for i in max_indices]
+        random.shuffle(max_children)
+        best_child = max_children[0]
+        score = max_values[0]
+        optimal_move = best_child.coords
 
-      return score, optimal_move
+        return score, optimal_move
 
     def post_move_to_broker(self, move: CoordPair):
         """Send a move to the game broker."""
@@ -1345,21 +1350,21 @@ def main():
     parser.add_argument('--max_turns', type=int, help='max number of turns in the game')
     parser.add_argument('--heuristic', type=int, help='Which heuristic function to use: 0,1,2')
     args = parser.parse_args()
-    args.game_type = "at"
+    # args.game_type = "at"
     # parse the game type
     if args.game_type == "attacker":
-      game_type = GameType.AttackerVsComp
+        game_type = GameType.AttackerVsComp
     elif args.game_type == "defender":
-      game_type = GameType.CompVsDefender
+        game_type = GameType.CompVsDefender
     elif args.game_type == "manual":
-      game_type = GameType.AttackerVsDefender
+        game_type = GameType.AttackerVsDefender
     else:
-      game_type = GameType.CompVsComp
+        game_type = GameType.CompVsComp
 
     # set up game options
     options = Options(game_type=game_type)
 
-    # override class defaults via command line optionsc1c2
+    # override class defaults via command line options
     if args.max_depth is not None:
         options.max_depth = args.max_depth
     if args.max_time is not None:
@@ -1369,11 +1374,10 @@ def main():
     if args.max_turns is not None:
         options.max_turns = args.max_turns
     if args.alpha_beta is not None:
-        if(args.alpha_beta.lower() == "true"):
+        if (args.alpha_beta.lower() == "true"):
             options.alpha_beta = True
-        elif(args.alpha_beta.lower() == "false"):
+        elif (args.alpha_beta.lower() == "false"):
             options.alpha_beta = False
-        print(options.alpha_beta)
     if args.heuristic is not None:
         options.heuristic = args.heuristic
 
@@ -1392,7 +1396,11 @@ def main():
 
         winner = game.has_winner()
         if winner is not None:
-            print(f"{winner.name} wins in {game.turns_played - 1} turns!")
+            if game.turns_played == 100:
+                num = game.turns_played
+            else:
+                num = game.turns_played - 1
+            print(f"{winner.name} wins in {num} turns!")
             file_writer.append_to_file(f"\n{winner.name} wins in {game.turns_played - 1} turns!")
             break
         if game.options.game_type == GameType.AttackerVsDefender:
@@ -1403,9 +1411,13 @@ def main():
             game.human_turn()
         else:
             player = game.next_player
-            move = game.computer_turn()
+            move, msg = game.computer_turn()
             if move is not None:
                 game.post_move_to_broker(move)
+            elif msg == "Time up":
+                game.turns_played += 1
+                print("The computer took too long to make a move!")
+                file_writer.append_to_file("\nThe computer took too long to make a move!\n")
             else:
                 print("Computer doesn't know what to do!!!")
                 file_writer.append_to_file("\nComputer doesn't know what to do!!!")
