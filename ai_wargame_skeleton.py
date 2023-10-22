@@ -1071,10 +1071,6 @@ class Game:
         if self.stats.total_seconds > 0:
             self.fileWriter.append_to_file(f"\nEval perf.: {final:0.1f}k/s")
 
-        # if self.alpha_beta=True:
-        #   alpha_beta()
-        # else:
-        # optimal_move()
 
         return move
 
@@ -1199,8 +1195,6 @@ class Game:
             max_eval = child_score
             best_child = child
 
-
-
         return max_eval
 
       else:
@@ -1220,7 +1214,6 @@ class Game:
             # give to min_eval the smallest h value
             min_eval = min(min_eval, eval)
             best_child = child
-
 
       return min_eval
 
