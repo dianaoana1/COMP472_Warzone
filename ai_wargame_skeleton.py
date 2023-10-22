@@ -251,7 +251,7 @@ class Options:
     min_depth: int | None = 2
     max_time: float | None = 5.0
     game_type: GameType = GameType.AttackerVsDefender
-    alpha_beta: bool = False
+    alpha_beta: bool = True
     max_turns: int | None = 100
     randomize_moves: bool = True
     broker: str | None = None
@@ -641,6 +641,34 @@ class Game:
                 print(result)
                 self.fileWriter.append_to_file(result + "\n")
                 self.next_turn()
+
+        if self.next_player == Player.Attacker:
+            current_player = Player.Attacker
+            otherPlayer = Player.Defender
+        else:
+            current_player = Player.Defender
+            otherPlayer = Player.Defender
+
+        ai_isAlive = 0
+        for type in self.player_units(current_player):
+            if type[1].type == UnitType.AI:
+                ai_isAlive += 1
+        if ai_isAlive == 0:
+            if self.next_player == Player.Attacker:
+                self._attacker_has_ai = False
+            else:
+                self._defender_has_ai = False
+
+        ai_isAlive = 0
+        for type in self.player_units(otherPlayer):
+            if type[1].type == UnitType.AI:
+                ai_isAlive += 1
+        if ai_isAlive == 0:
+            if self.next_player == Player.Attacker:
+                self._attacker_has_ai = False
+            else:
+                self._defender_has_ai = False
+
         return mv
 
     def player_units(self, player: Player) -> Iterable[Tuple[Coord, Unit]]:
@@ -675,6 +703,9 @@ class Game:
                 return None
             else:
                 return Player.Attacker
+        if not self._attacker_has_ai and not self._defender_has_ai:
+            print("BOTH DEAD")
+            return Player.Defender
         return Player.Defender
 
     def move_candidates(self) -> Iterable[CoordPair]:
@@ -1006,12 +1037,11 @@ class Game:
     def suggest_move(self) -> CoordPair | None:
         """Suggest the next move using minimax alpha beta. TODO: REPLACE RANDOM_MOVE WITH PROPER GAME LOGIC!!!"""
         start_time = datetime.now()
-
         root, total, listNodes, averageNodes = self.createTree(self.options.heuristic)
-        if (self.options.alpha_beta):
-          (score, move, avg_depth) = self.optimal_move_alpha_beta(root, self.options.max_depth)
+        if self.options.alpha_beta:
+          (score, move) = self.optimal_move_alpha_beta(root, self.options.max_depth)
         else:
-          (score, move, avg_depth) = self.optimal_move_minimax(root, self.options.max_depth)
+          (score, move) = self.optimal_move_minimax(root, self.options.max_depth)
 
         output = ""
         output2 = ""
@@ -1140,7 +1170,7 @@ class Game:
         optimal_move = best_child.coords
 
         # "Best Child is "+str(best_child)
-        return score, optimal_move, 0
+        return score, optimal_move
 
     # ====================================================================================================================
 
@@ -1235,10 +1265,7 @@ class Game:
       score = max_values[0]
       optimal_move = best_child.coords
 
-      print("THE BEST SCORE of CHILD IS", best_child.score)
-      print("THE BEST CHILD IS " + str(optimal_move))
-      # "Best Child is "+str(best_child)
-      return score, optimal_move, 0
+      return score, optimal_move
 
     def post_move_to_broker(self, move: CoordPair):
         """Send a move to the game broker."""
@@ -1318,7 +1345,7 @@ def main():
     parser.add_argument('--max_turns', type=int, help='max number of turns in the game')
     parser.add_argument('--heuristic', type=int, help='Which heuristic function to use: 0,1,2')
     args = parser.parse_args()
-
+    args.game_type = "at"
     # parse the game type
     if args.game_type == "attacker":
       game_type = GameType.AttackerVsComp
