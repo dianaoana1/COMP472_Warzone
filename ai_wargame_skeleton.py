@@ -251,7 +251,7 @@ class Options:
     min_depth: int | None = 2
     max_time: float | None = 5.0
     game_type: GameType = GameType.AttackerVsDefender
-    alpha_beta: bool = True
+    alpha_beta: bool = False
     max_turns: int | None = 100
     randomize_moves: bool = True
     broker: str | None = None
@@ -843,7 +843,6 @@ class Game:
             totalNbPieces = defenderSide - attackerSide
         else:
             totalNbPieces = attackerSide - defenderSide
-
         return totalNbPieces + nbMoves1 + nbUnits1 - nbMoves2 + nbUnits2
 
     def e2(self, main_player):
@@ -997,12 +996,11 @@ class Game:
         """Suggest the next move using minimax alpha beta. TODO: REPLACE RANDOM_MOVE WITH PROPER GAME LOGIC!!!"""
         start_time = datetime.now()
 
-        options_instance = Options()
-        root, total, listNodes, averageNodes = self.createTree(int(options_instance.heuristic))
-        if (Options.alpha_beta):
-          (score, move, avg_depth) = self.optimal_move_alpha_beta(root, options_instance.max_depth)
+        root, total, listNodes, averageNodes = self.createTree(self.options.heuristic)
+        if (self.options.alpha_beta):
+          (score, move, avg_depth) = self.optimal_move_alpha_beta(root, self.options.max_depth)
         else:
-          (score, move, avg_depth) = self.optimal_move_minimax(root, options_instance.max_depth)
+          (score, move, avg_depth) = self.optimal_move_minimax(root, self.options.max_depth)
 
         output = ""
         output2 = ""
@@ -1163,14 +1161,14 @@ class Game:
           eval = self.alpha_beta(child, depth - 1, alpha, beta, False)
 
           alpha = max(alpha, eval)
-
+          if beta <= alpha:
+            break
 
           # check whether the current child heuristic is better, if so assign new child
           if child_score > max_eval:
             max_eval = child_score
             best_child = child
-          if beta <= alpha:
-            break
+
 
 
         return max_eval
@@ -1185,14 +1183,15 @@ class Game:
           eval = self.alpha_beta(child, depth - 1, alpha, beta, True)
 
           beta = min(beta, eval)
+          if beta <= alpha:
+            break
 
           if child_score < min_eval:
             # give to min_eval the smallest h value
             min_eval = min(min_eval, eval)
             best_child = child
 
-          if beta <= alpha:
-            break
+
       return min_eval
 
       # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1210,7 +1209,7 @@ class Game:
       for child in root.children:
         value = self.alpha_beta(child, depth, MIN_HEURISTIC_SCORE, MAX_HEURISTIC_SCORE, False)
         if value >= optimal_value:
-          optimal_value = value
+          # optimal_value = value
           # best_child = child
           # optimal_move = root.value[index]
           values.append(value)
@@ -1304,11 +1303,11 @@ def main():
                         default="manual",
                         help='game type: auto|attacker|defender|manual')
     parser.add_argument('--broker', type=str, help='play via a game broker')
-    parser.add_argument('--alpha_beta', type=bool, help='play with alpha beta or minimax')
+    parser.add_argument('--alpha_beta', type=str, help='play with alpha beta or minimax')
     parser.add_argument('--max_turns', type=int, help='max number of turns in the game')
     parser.add_argument('--heuristic', type=int, help='Which heuristic function to use: 0,1,2')
     args = parser.parse_args()
-    args.game_type = "attacker"
+
     # parse the game type
     if args.game_type == "attacker":
       game_type = GameType.AttackerVsComp
@@ -1330,11 +1329,15 @@ def main():
     if args.broker is not None:
         options.broker = args.broker
     if args.max_turns is not None:
-      options.max_turns = args.max_turns
+        options.max_turns = args.max_turns
     if args.alpha_beta is not None:
-      options.alpha_beta = args.alpha_beta
+        if(args.alpha_beta.lower() == "true"):
+            options.alpha_beta = True
+        elif(args.alpha_beta.lower() == "false"):
+            options.alpha_beta = False
+        print(options.alpha_beta)
     if args.heuristic is not None:
-      options.heuristic = args.heuristic
+        options.heuristic = args.heuristic
 
     fileName = f"gameTrace-{str(options.alpha_beta).lower()}-{str(int(options.max_time))}-{str(options.max_turns)}.txt"
 
