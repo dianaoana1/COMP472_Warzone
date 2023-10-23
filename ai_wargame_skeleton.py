@@ -439,6 +439,10 @@ class Game:
         if unit_src.player == Player.Defender and unit_src.type in defender_move:
             if coords.dst not in coords_down_right:
                 return False
+        if unit_src.type == UnitType.Virus or unit_src.type == UnitType.Tech:
+            if (coords.dst not in coords_up_left or coords.dst not in coords_down_right):
+                print("here")
+                return False
         is_in_repair = self.is_in_repair(coords)
         if unit_dst is not None and unit_src.player == unit_dst.player and not is_in_repair:
             return False
