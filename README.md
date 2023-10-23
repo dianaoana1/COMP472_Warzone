@@ -36,9 +36,9 @@ Here are the repairs that can be done to members of the same team:
 
 1 - e0 = (3VP1 + 3TP1 + 3FP1 + 3PP1 + 9999AIP1) − (3VP2 + 3TP2 + 3FP2 + 3PP2 + 9999AIP2)
 
-2 - Take into consideration the number of units and the number of moves available to each opponents
+2 - e1 focuses on the AI being more offensive and using its units to attack the opponent. It will only put its focus on the AI when it is endangered.
 
-3 - e2 = (4VP1 + 3TP1 + 2FP1 + 3PP1 + 4000AIP1 + SumOfAllHealthValues) − (4VP2 + 3TP2 + 2FP2 + 3PP2 + 4000AIP2 + SumOfAllHealthValues)
+3 - e2 focuses on the health of all of the units whilst assigning a higher weight to the AI and the defensive units (Tech and Firewall) to protect and heal the AI whilst the other units focus on attacking.
 
 <br />Here is an example on how to run the game:  python3 ai_wargame_skeleton.py --heuristic 0 --game_type attacker
 <br />
