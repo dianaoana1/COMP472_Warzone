@@ -808,10 +808,16 @@ class Game:
 
     def e1(self, main_player, moves):
         ai_weight = 99999
-        virus_weight = 700  # Increased weight for Virus units
-        program_weight = 700  # Increased weight for Program units
+        virus_weight = 700
+        program_weight = 700
         total_attacker_value = 0
         total_defender_value = 0
+        # if main_player == Player.Attacker:
+        #     numMoves_attacker = len(moves)
+        #     numMoves_defender = len(list(self.move_candidates()))
+        # else:
+        #     numMoves_defender = len(moves)
+        #     numMoves_attacker = len(list(self.move_candidates()))
 
         for player in [Player.Defender, Player.Attacker]:
             for unit in self.player_units(player):
@@ -849,40 +855,34 @@ class Game:
         return score
 
     def e2(self, main_player):
-        # Constants to control the weights
-        weight_ai_health = 100
+        weight_ai = 100
         weight_offense = 3
         weight_defense = 50
 
-        # setting up dicts to store unit types and health
         player1_units = {}
         player2_units = {}
 
-        # Count the units and their health for both players
         for coord, unit in self.player_units(Player.Defender):
             player1_units[unit.type] = unit.health
 
         for coord, unit in self.player_units(Player.Attacker):
             player2_units[unit.type] = unit.health
 
-        # Get AI unit health, default ai health to 0 if no AI
         ai_health_player1 = player1_units.get(UnitType.AI, 0)
         ai_health_player2 = player2_units.get(UnitType.AI, 0)
 
-        # Calculate the offense and defense scores for both players
         offense_score_player1 = player1_units.get(UnitType.Virus, 0) + player1_units.get(UnitType.Program, 0)
         defense_score_player1 = player1_units.get(UnitType.Tech, 0) + player1_units.get(UnitType.Firewall, 0)
 
         offense_score_player2 = player2_units.get(UnitType.Virus, 0) + player2_units.get(UnitType.Program, 0)
         defense_score_player2 = player2_units.get(UnitType.Tech, 0) + player2_units.get(UnitType.Firewall, 0)
 
-        # Calculate the heuristic score for both players
         if main_player == Player.Defender:
-            player1_score = weight_ai_health * ai_health_player1 + weight_offense * offense_score_player1 + weight_defense * defense_score_player1
-            player2_score = weight_ai_health * ai_health_player2 + weight_offense * offense_score_player2 + weight_defense * defense_score_player2
+            player1_score = weight_ai * ai_health_player1 + weight_offense * offense_score_player1 + weight_defense * defense_score_player1
+            player2_score = weight_ai * ai_health_player2 + weight_offense * offense_score_player2 + weight_defense * defense_score_player2
         else:
-            player1_score = weight_ai_health * ai_health_player2 + weight_offense * offense_score_player2 + weight_defense * defense_score_player2
-            player2_score = weight_ai_health * ai_health_player1 + weight_offense * offense_score_player1 + weight_defense * defense_score_player1
+            player1_score = weight_ai * ai_health_player2 + weight_offense * offense_score_player2 + weight_defense * defense_score_player2
+            player2_score = weight_ai * ai_health_player1 + weight_offense * offense_score_player1 + weight_defense * defense_score_player1
 
         return player1_score - player2_score
 
@@ -1012,10 +1012,6 @@ class Game:
             else:
                 self._attacker_has_ai = False
             return None, "Time up"
-        # if self.alpha_beta=True:
-        #   alpha_beta()
-        # else:
-        # optimal_move()
 
         return move, ""
 
@@ -1031,8 +1027,6 @@ class Game:
         if depth == 0 or not node.children:
             # return self.score
             return node.score
-
-        # max_eval = MIN_HEURISTIC_SCORE
 
         # in max player turn
         if max_player:
@@ -1074,8 +1068,8 @@ class Game:
     def optimal_move_minimax(self, root,
                              depth) -> Tuple[int, CoordPair | None, float]:
 
-        # root = self.createTree()
-
+        print("Using Minimax")
+        self.fileWriter.append_to_file("\nUsing Minimax")
         optimal_move = None
         optimal_value = MIN_HEURISTIC_SCORE
         best_child = None
@@ -1111,12 +1105,10 @@ class Game:
       # pass the mini/max value till now
 
       # reached depth 0 or have no children
-      # if node =None
       if depth == 0 or not node.children:
         # return self.score
         return node.score
 
-      # max_eval = MIN_HEURISTIC_SCORE
 
       # in max player turn
       if max_player:
@@ -1167,8 +1159,8 @@ class Game:
     def optimal_move_alpha_beta(self, root,
                                 depth) -> Tuple[int, CoordPair | None, float]:
 
-      # root = self.createTree()
-      print("Using Alpha beta")
+      print("Using Alpha-beta")
+      self.fileWriter.append_to_file("\nUsing Alpha-Beta")
       optimal_move = None
       optimal_value = MIN_HEURISTIC_SCORE
       best_child = None
@@ -1177,9 +1169,6 @@ class Game:
       for child in root.children:
         value = self.alpha_beta(child, depth, MIN_HEURISTIC_SCORE, MAX_HEURISTIC_SCORE, False)
         if value >= optimal_value:
-          # optimal_value = value
-          # best_child = child
-          # optimal_move = root.value[index]
           values.append(value)
           children.append(child)
 
