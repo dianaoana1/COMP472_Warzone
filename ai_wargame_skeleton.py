@@ -491,11 +491,10 @@ class Game:
                         f"\n{src} attacked the {dst}, the health levels have been adjusted!")
                     return True, f"\n{src} attacked the {dst}, the health levels have been adjusted!"
 
-            if coords.dst == coords.src:
+            if coords.src == coords.dst:
                 print("The unit {} has self-destructed.".format(unit_src))
                 self.fileWriter.append_to_file(
                     "\nThe unit {} has self-destructed.".format(unit_src))
-                self.mod_health(coords.dst, -9)
                 # Attack all surrounding units
                 for row in range(coords.src.row - 1, coords.src.row + 2):
                     for col in range(coords.src.col - 1, coords.src.col + 2):
@@ -509,6 +508,7 @@ class Game:
                             self.fileWriter.append_to_file(
                                 f"\n{unit_src} deals {damage} damage to {unit_target}")
                             self.mod_health(target_coord, -damage)
+                self.mod_health(coords.src, -9)
 
             self.set(coords.dst, self.get(coords.src))
             self.set(coords.src, None)
@@ -806,70 +806,6 @@ class Game:
             score = secondPart - firstPart
         return score
 
-    # def e1(self, main_player, moves):
-    #     """Calculates the heuristic score depending on the number of moves available and the number of pieces on the board"""
-    #     score = 0
-    #     # Defender
-    #     nbMoves1 = 0
-    #     nbUnits1 = 0
-    #     nbT1 = 0
-    #     nbF1 = 0
-    #     nbP1 = 0
-    #     nbAi1 = 0
-    #     defenderSide = 0
-    #     if main_player == Player.Defender:
-    #         nbMoves1 = len(moves)
-    #     else:
-    #         nbMoves1 = len(list(self.move_candidates()))
-    #     # nbUnits1 = len(list(self.player_units(Player.Defender)))
-    #
-    #     # Attacker
-    #     nbMoves2 = 0
-    #     nbUnits2 = 0
-    #     nbV2 = 0
-    #     nbF2 = 0
-    #     nbP2 = 0
-    #     nbAi2 = 0
-    #     attackerSide = 0
-    #     if main_player == Player.Attacker:
-    #         nbMoves2 = len(moves)
-    #     else:
-    #         nbMoves2 = len(list(self.move_candidates()))
-    #     # nbUnits2 = len(list(self.player_units(Player.Attacker)))
-    #
-    #     for player in [Player.Attacker, Player.Defender]:
-    #         for type in self.player_units(player):
-    #             if type[1].type == UnitType.AI:
-    #                 if player == Player.Defender:
-    #                     nbAi1 += 1
-    #                 else:
-    #                     nbAi2 += 1
-    #             elif type[1].type == UnitType.Tech:
-    #                 nbT1 += 1
-    #             elif type[1].type == UnitType.Virus:
-    #                 nbV2 += 1
-    #             elif type[1].type == UnitType.Program:
-    #                 if player == Player.Defender:
-    #                     nbP1 += 1
-    #                 else:
-    #                     nbP2 += 1
-    #             elif type[1].type == UnitType.Firewall:
-    #                 if player == Player.Defender:
-    #                     nbF1 += 1
-    #                 else:
-    #                     nbF2 += 1
-    #             else:
-    #                 break
-    #
-    #     defenderSide = 500 * nbT1 + 100 * nbF1 + 100 * nbP1 + 99999 * nbAi1
-    #     attackerSide = 500 * nbV2 + 100 * nbF2 + 100 * nbP2 + 99999 * nbAi2
-    #
-    #     if main_player == Player.Defender:
-    #         totalNbPieces = defenderSide - attackerSide
-    #     else:
-    #         totalNbPieces = attackerSide - defenderSide
-    #     return totalNbPieces + nbMoves1 + nbUnits1 - nbMoves2 + nbUnits2
-
     def e1(self, main_player, moves):
         ai_weight = 99999
         virus_weight = 700  # Increased weight for Virus units
@@ -911,90 +847,6 @@ class Game:
             score = total_defender_value - total_attacker_value
 
         return score
-
-    # def e1(self, main_player, moves):
-    #     """Calculates the heuristic score depending on the number of moves available and the number of pieces on the board multiplied by their health values"""
-    #     ai_weight = 99999
-    #     tech_weight = 500
-    #     virus_weight = 500
-    #     firewall_weight = 100
-    #     program_weight = 100
-    #     total_attacker = 0
-    #     total_defender= 0
-    #     score = 0
-    #
-    #     if main_player == Player.Attacker:
-    #         nbMovesAttacker = len(moves)
-    #         nbMovesDefender = len(list(self.move_candidates()))
-    #     else:
-    #         nbMovesAttacker = len(list(self.move_candidates()))
-    #         nbMovesDefender = len(moves)
-    #
-    #     # get the number of units for each and their current health
-    #     for player in [Player.Defender, Player.Attacker]:
-    #         for unit in self.player_units(player):
-    #             type = unit[1].type
-    #             if type == UnitType.AI:
-    #                 if player == Player.Attacker:
-    #                     total_attacker += ai_weight
-    #                 else:
-    #                     total_defender += ai_weight
-    #             elif type == UnitType.Tech:
-    #                 if player == Player.Attacker:
-    #                     total_attacker += tech_weight
-    #                 else:
-    #                     total_defender += tech_weight
-    #             elif type == UnitType.Virus:
-    #                 if player == Player.Attacker:
-    #                     total_attacker += virus_weight
-    #                 else:
-    #                     total_defender += virus_weight
-    #             elif type == UnitType.Firewall:
-    #                 if player == Player.Attacker:
-    #                     total_attacker += firewall_weight
-    #                 else:
-    #                     total_defender += firewall_weight
-    #             elif type == UnitType.Program:
-    #                 if player == Player.Attacker:
-    #                     total_attacker += program_weight
-    #                 else:
-    #                     total_defender += program_weight
-    #
-    #     # for player in [Player.Defender, Player.Attacker]:
-    #     #     for unit in self.player_units(player):
-    #     #         type = unit[1].type
-    #     #         health = unit[1].health
-    #     #         if type == UnitType.AI:
-    #     #             if player == Player.Attacker:
-    #     #                 total_attacker += ai_weight * health
-    #     #             else:
-    #     #                 total_defender += ai_weight * health
-    #     #         elif type == UnitType.Tech:
-    #     #             if player == Player.Attacker:
-    #     #                 total_attacker += tech_weight * health
-    #     #             else:
-    #     #                 total_defender += tech_weight * health
-    #     #         elif type == UnitType.Virus:
-    #     #             if player == Player.Attacker:
-    #     #                 total_attacker += virus_weight * health
-    #     #             else:
-    #     #                 total_defender += virus_weight * health
-    #     #         elif type == UnitType.Firewall:
-    #     #             if player == Player.Attacker:
-    #     #                 total_attacker += firewall_weight * health
-    #     #             else:
-    #     #                 total_defender += firewall_weight * health
-    #     #         elif type == UnitType.Program:
-    #     #             if player == Player.Attacker:
-    #     #                 total_attacker += program_weight * health
-    #     #             else:
-    #     #                 total_defender += program_weight * health
-    #
-    #     if main_player == Player.Attacker:
-    #         score = (total_attacker + 3 * nbMovesAttacker) - (total_defender + 3 * nbMovesDefender)
-    #     else:
-    #         score = (total_defender + 3 * nbMovesDefender) - (total_attacker + 3 * nbMovesAttacker)
-    #     return score
 
     def e2(self, main_player):
         # Constants to control the weights
@@ -1420,7 +1272,7 @@ def main():
     parser.add_argument('--max_turns', type=int, help='max number of turns in the game')
     parser.add_argument('--heuristic', type=int, help='Which heuristic function to use: 0,1,2')
     args = parser.parse_args()
-    # args.game_type = "at"
+    args.game_type = "at"
     # parse the game type
     if args.game_type == "attacker":
       game_type = GameType.AttackerVsComp
