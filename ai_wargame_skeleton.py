@@ -454,7 +454,7 @@ class Game:
                     self.fileWriter.append_to_file(
                         f"\n{unit_src} repaired {health_amount} health to {unit_dst}")
                     self.mod_health(coords.dst, health_amount)
-                return True, "Done\n"
+                return True, "\n"
 
             # ++++++++++++++++++++++ CHECKING HERE IF AN ATTACK IS HAPPENING +++++++++++++++++++++++++++++++++++++++++++++
             # Save the coords of the src and the dst
@@ -479,16 +479,12 @@ class Game:
                 if mover_type == "Attacker" and unit_dst.player == Player.Defender:
                     # The types are different, so an attack will occur
                     self.perform_attack(src, dst)
-                    self.fileWriter.append_to_file(
-                        f"\n{src} attacked the {dst}, the health levels have been adjusted!")
                     return True, f"{src} attacked the {dst}, the health levels have been adjusted!"
 
                 # src is defender and dst is attacker
                 elif mover_type == "Defender" and unit_dst.player == Player.Attacker:
                     # The types are different, so an attack will occur
                     self.perform_attack(src, dst)
-                    self.fileWriter.append_to_file(
-                        f"\n{src} attacked the {dst}, the health levels have been adjusted!")
                     return True, f"\n{src} attacked the {dst}, the health levels have been adjusted!"
 
             if coords.src == coords.dst:
@@ -807,26 +803,21 @@ class Game:
         return score
 
     def e1(self, main_player, moves):
-        ai_weight = 99999
-        virus_weight = 700
-        program_weight = 700
+        ai_weight = 9999
+        virus_weight = 400
+        program_weight = 300
         total_attacker_value = 0
         total_defender_value = 0
-        # if main_player == Player.Attacker:
-        #     numMoves_attacker = len(moves)
-        #     numMoves_defender = len(list(self.move_candidates()))
-        # else:
-        #     numMoves_defender = len(moves)
-        #     numMoves_attacker = len(list(self.move_candidates()))
 
         for player in [Player.Defender, Player.Attacker]:
             for unit in self.player_units(player):
                 type = unit[1].type
+                health = unit[1].health
                 if type == UnitType.AI:
                     if player == Player.Attacker:
-                        total_attacker_value += ai_weight * unit[1].health
+                        total_attacker_value += ai_weight + (300 * health)
                     else:
-                        total_defender_value += ai_weight * unit[1].health
+                        total_defender_value += ai_weight + (300 * health)
                 elif type == UnitType.Virus:
                     if player == Player.Attacker:
                         total_attacker_value += virus_weight
@@ -838,8 +829,8 @@ class Game:
                     else:
                         total_defender_value += program_weight
                 else:
-                    # Assign lower values to defensive units, such as firewalls and tech
-                    total_value = 500 if type == UnitType.Tech else 200
+                    # Assign lower values to defensive units: firewalls and tech
+                    total_value = 200 if type == UnitType.Tech else 100
 
                     if player == Player.Attacker:
                         total_attacker_value += total_value
