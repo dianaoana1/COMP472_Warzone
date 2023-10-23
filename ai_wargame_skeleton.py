@@ -430,6 +430,10 @@ class Game:
         if unit_src.player == Player.Defender and unit_src.type in defender_move:
             if coords.dst not in coords_down_right:
                 return False
+        if unit_src.type == UnitType.Virus or unit_src.type == UnitType.Tech:
+            if (coords.dst not in coords_up_left or coords.dst not in coords_down_right):
+                print("here")
+                return False
         is_in_repair = self.is_in_repair(coords)
         if unit_dst is not None and unit_src.player == unit_dst.player and not is_in_repair:
             return False
@@ -1252,7 +1256,6 @@ def main():
     parser.add_argument('--max_turns', type=int, help='max number of turns in the game')
     parser.add_argument('--heuristic', type=int, help='Which heuristic function to use: 0,1,2')
     args = parser.parse_args()
-    args.game_type = "at"
     # parse the game type
     if args.game_type == "attacker":
       game_type = GameType.AttackerVsComp
