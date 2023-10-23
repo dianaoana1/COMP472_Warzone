@@ -390,12 +390,21 @@ class Game:
         is_legal = self.is_legal_move(coords)
         return is_legal or unit_src == self.get(coords.dst)
 
+    def row_column_verification(self, coords: CoordPair) -> bool:
+        adj_coords = coords.src.iter_adjacent()
+        unit_dst = self.get(coords.dst)
+        for coord in adj_coords:
+            unit_adj = self.get(coord)
+            if unit_adj is not None:
+                if unit_adj == unit_dst:
+                    return True
+        return False
     def is_in_repair(self, coords: CoordPair) -> bool:
         if self.get(coords.src) is not None and self.get(coords.dst) is not None:
             unit_src = self.get(coords.src)
             unit_dst = self.get(coords.dst)
 
-            if unit_src.player.name == unit_dst.player.name and coords.src != coords.dst:
+            if unit_src.player.name == unit_dst.player.name and coords.src != coords.dst and self.row_column_verification(coords):
                 health_amount = unit_src.repair_amount(unit_dst)
                 if health_amount > 0:
                     return True
@@ -1252,7 +1261,7 @@ def main():
     parser.add_argument('--max_turns', type=int, help='max number of turns in the game')
     parser.add_argument('--heuristic', type=int, help='Which heuristic function to use: 0,1,2')
     args = parser.parse_args()
-    args.game_type = "at"
+    # args.game_type = "at"
     # parse the game type
     if args.game_type == "attacker":
       game_type = GameType.AttackerVsComp
