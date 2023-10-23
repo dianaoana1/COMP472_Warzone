@@ -9,7 +9,7 @@ Repairs and attacks have been implemented. The game accounts for health values a
 Self-destruct has been implemented.
 An output is also generated that traces every step of the game.
 
-To play the game, the user needs to type in the coordinates where they would like their unit to move, wait for their opponent to play in their turn and do so back and forth.
+To play the game, the user needs to type in the coordinates where they would like their unit to move, wait for their opponent to play in their turn, and do so back and forth.
 
 Damages can be inflicted to players. Here is the table representing the damages caused by opponents:
 |        | S | T | AI | Virus | Tech | Firewall | Program |
@@ -28,6 +28,16 @@ Here are the repairs that can be done to members of the same team:
 | Tech   | 3  | 0     | 0   | 3        | 3       |
 | Firewall | 0  | 0     | 0   | 0        | 0       |
 | Program | 0  | 0     | 0   | 0        | 0       |
+
+
+<b>Here is an example of how to run the game:  "python3 ai_wargame_skeleton.py --heuristic 0 --game_type attacker"</b>
+- --max_depth on the termial, we can indicate the maximum depth for the game tree
+- --max_time on the terminal, we can indicate how maximum time allocated for each turn of the game
+- --alpha_beta followed by true or false, indicated whether the game wiill run with the alpha-beta algorithm or minimax
+- max_turns followed by an integer value indicated the maximum number of turn to reacch the end of the game
+- --game_type followed by, "auto" indicates that the game will play automatically (AI-AI) or "attacker" indicates the AI will be the attacker, or "defender" indicated the AI will be the denfender
+
+
 
 
 <b>The game can be run in different modes: AI-AI, H-AI, AI-H, H-H</b>
